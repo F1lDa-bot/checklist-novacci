@@ -213,31 +213,28 @@
     <script>
         const checklistData = [
             { category: "PŘÍCHOD ZÁKAZNÍKA", items: [
-                { text: "Přivítání zákazníka", weight: 3 },
-                { text: "Zjištění základních informací o zákazníkovi a zařízení", weight: 5 },
-                { text: "Vysvětlení, co se bude dít během návštěvy", weight: 3 },
-                { text: "Informace o ceně služby", weight: 5 },
-                { text: "Informace o odhadovaném čase opravy", weight: 5 }
+                { text: "Přivítání zákazníka", weight: 2 },
+                { text: "Zjištění základních informací o zákazníkovi a zařízení", weight: 2 },
+                { text: "Vysvětlení, co se bude dít během návštěvy", weight: 5 },
+                { text: "Informace o ceně služby a odhadovaném čase", weight: 5 }
             ]},
             { category: "ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ", items: [
                 { text: "Co je konkrétně za závadu?", weight: 5 },
                 { text: "Jak se závada projevuje?", weight: 5 },
-                { text: "Jak často se problém vyskytuje?", weight: 4 },
-                { text: "Od kdy problém trvá?", weight: 4 },
-                { text: "Zkoušel už zákazník nějaké kroky k řešení?", weight: 4 },
-                { text: "Použití správného protokolu (reklamační/servisní)", weight: 1 },
-                { text: "Správné a kompletní vyplnění protokolu", weight: 4 },
-                { text: "Proaktivní vysvětlení obsahu diagnostiky", weight: 4 }
+                { text: "Jak často se problém vyskytuje?", weight: 3 },
+                { text: "Od kdy problém trvá?", weight: 3 },
+                { text: "Zkoušel už zákazník nějaké kroky k řešení?", weight: 3 },
+                { text: "Vyplnění předávacího protokolu", weight: 4 },
+                { text: "Ukázka a vysvětlení MRI diagnostiky", weight: 4 }
             ]},
             { category: "ČEKÁNÍ", items: [
+                { text: "Zákazník informován o čekací době", weight: 5 },
                 { text: "Nabídnuta voda / místo k sezení (Flex table)", weight: 2 }
             ]},
             { category: "ODCHOD", items: [
-                { text: "Sdělena výsledná diagnóza / stav zařízení / provedeno čištění", weight: 5 },
-                { text: "Test závady po diagnostice/reinstalaci/čištění", weight: 3 },
-                { text: "Ukončení diagnostiky a vypnutí zařízení (neodcházet s kódy)", weight: 5 },
-                { text: "Stihnutí času, který byl řečen na začátku", weight: 5 },
-                { text: "Poskytnuta doporučení (častější čištění, jiný postup…)", weight: 4 },
+                { text: "Sdělena výsledná diagnóza / stav zařízení / provedeno čištění", weight: 3 },
+                { text: "Test závady po diagnostice/reinstalaci/čištění", weight: 5 },
+                { text: "Poskytnuta doporučení (častější čištění, jiný postup…)", weight: 5 },
                 { text: "Rozloučení se zákazníkem", weight: 2 }
             ]}
         ];
@@ -246,8 +243,7 @@
              { category: "Možné scénáře po diagnostice", items: [
                 { text: "Oprava zařízení", weight: 5 },
                 { text: "Výkup zařízení (pokud se dá vykoupit)", weight: 3 },
-                { text: "Reklamace", weight: 5 },
-                { text: "Baterie - kontrola kondice a nabídka řešení", weight: 2}
+                { text: "Reklamace", weight: 5 }
             ]},
              { category: "Prodej nového zařízení / příslušenství (ACC):", items: [
                 { text: "Nabídnuto nové zařízení", weight: 1 },
@@ -382,9 +378,27 @@
         }
 
         function renderAll() {
-            checklistData.forEach(cat => cat.items.forEach((item, i) => checklistContainer.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'checklist'))));
-            scenariosData.forEach(cat => cat.items.forEach((item, i) => scenariosContainer.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'scenarios'))));
-            penaltyData.forEach(cat => cat.items.forEach((item, i) => penaltiesContainer.appendChild(createPenaltyItem(item, `${cat.category}-${i}`))));
+            checklistData.forEach(cat => {
+                const categoryHeader = document.createElement('h3');
+                categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-blue-700';
+                categoryHeader.textContent = cat.category;
+                checklistContainer.appendChild(categoryHeader);
+                cat.items.forEach((item, i) => checklistContainer.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'checklist')));
+            });
+            scenariosData.forEach(cat => {
+                 const categoryHeader = document.createElement('h3');
+                categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-green-700';
+                categoryHeader.textContent = cat.category;
+                scenariosContainer.appendChild(categoryHeader);
+                cat.items.forEach((item, i) => scenariosContainer.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'scenarios')));
+            });
+            penaltyData.forEach(cat => {
+                const categoryHeader = document.createElement('h3');
+                categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-red-700';
+                categoryHeader.textContent = cat.category;
+                penaltiesContainer.appendChild(categoryHeader);
+                cat.items.forEach((item, i) => penaltiesContainer.appendChild(createPenaltyItem(item, `${cat.category}-${i}`)));
+            });
         }
 
         function calculateScore() {
@@ -494,7 +508,7 @@
 
             const checklistExport = [["KATEGORIE", "POLOŽKA", "VÁHA", "VÝSLEDEK"]];
             checklistContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const cat = row.closest('div').previousElementSibling?.textContent || 'Neznámá';
+                const cat = row.closest('div').querySelector('h3')?.textContent || row.parentElement.previousElementSibling.textContent;
                 const text = row.querySelector('span').textContent;
                 const weight = row.querySelector('.weight-input').value;
                 const result = row.querySelector('input[type="radio"]:checked').value.toUpperCase();
@@ -504,7 +518,7 @@
 
             const bonusExport = [["KATEGORIE", "POLOŽKA", "VÁHA", "VÝSLEDEK"]];
             scenariosContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const cat = row.closest('div').previousElementSibling?.textContent || 'Neznámá';
+                const cat = row.closest('div').querySelector('h3')?.textContent || row.parentElement.previousElementSibling.textContent;
                 const text = row.querySelector('span').textContent;
                 const weight = row.querySelector('.weight-input').value;
                 const result = row.querySelector('input[value="yes"]').checked ? 'ANO' : 'NE';
@@ -514,7 +528,7 @@
             
             const penaltyExport = [["KATEGORIE", "PROHŘEŠEK", "PENALIZACE", "UDĚLENO"]];
             penaltiesContainer.querySelectorAll('.penalty-item-row').forEach(row => {
-                const cat = row.closest('div').previousElementSibling?.textContent || 'Neznámá';
+                const cat = row.closest('div').querySelector('h3')?.textContent || row.parentElement.previousElementSibling.textContent;
                 const text = row.querySelector('span').textContent;
                 const weight = row.querySelector('input[type="checkbox"]').dataset.weight;
                 const result = row.querySelector('input[type="checkbox"]').checked ? 'ANO' : 'NE';
@@ -538,7 +552,8 @@
                 strengths: [],
                 weaknesses: [],
                 bonuses: [],
-                penalties: []
+                penalties: [],
+                manualNotes: notesEl.value
             };
 
             checklistContainer.querySelectorAll('.checklist-item-row').forEach(row => {
@@ -617,15 +632,17 @@
             const data = getEvaluationData();
             const prompt = `
                 Jsi manažer kvality v servisním centru a píšeš slovní hodnocení pro technika.
-                Na základě následujících strukturovaných dat napiš profesionální, stručné a konstruktivní hodnocení.
-                Použij formátování s odrážkami pro silné a slabé stránky.
-
+                Na základě následujících strukturovaných dat a manuálních poznámek napiš profesionální, stručné a konstruktivní hodnocení.
+                
                 **Data pro hodnocení:**
                 - **Jméno technika:** ${data.technicianName}
                 - **Celková úspěšnost:** ${data.totalPercentage}
                 - **Základní body:** ${data.basePoints} z ${data.maxPoints}
                 - **Bonusové body:** ${data.bonusPoints}
                 - **Mínusové body:** ${data.penaltyPoints}
+
+                **Manuální poznámky od hodnotícího (tyto mají vysokou prioritu a měly by být zohledněny):**
+                ${data.manualNotes || 'Žádné.'}
 
                 **Silné stránky (splněno na ANO):**
                 ${data.strengths.length > 0 ? data.strengths.map(s => `- ${s}`).join('\n') : '- Žádné zaznamenané.'}
@@ -640,7 +657,7 @@
                 ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'}
 
                 **Tvoje úloha:**
-                Napiš slovní hodnocení, které začíná celkovým shrnutím, pokračuje výčtem silných stránek a poté oblastí pro zlepšení. Na závěr přidej pozitivní a motivující větu.
+                Napiš slovní hodnocení, které začíná celkovým shrnutím. Poté zkombinuj informace ze strukturovaných dat s kvalitativními postřehy z manuálních poznámek. Vytvoř souvislý text, který integruje obě perspektivy. Použij formátování s odrážkami pro přehlednost. Na závěr přidej pozitivní a motivující větu.
             `;
             const generatedText = await callGeminiAPI(prompt);
             if (generatedText) {
@@ -657,7 +674,7 @@
 
             const prompt = `
                 Jsi zkušený trenér pro techniky v servisním centru.
-                Na základě následujícího seznamu nedostatků navrhni konkrétní a praktické tipy pro zlepšení.
+                Na základě následujícího seznamu nedostatků a kontextu z manuálních poznámek navrhni konkrétní a praktické tipy pro zlepšení.
 
                 **Seznam nedostatků technika (${data.technicianName}):**
                 **Body, kde došlo ke ztrátě bodů:**
@@ -666,9 +683,11 @@
                 **Udělené penalizace:**
                 ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'}
 
+                **Kontext z manuálních poznámek hodnotícího:**
+                ${data.manualNotes || 'Žádné.'}
+
                 **Tvoje úloha:**
-                Pro 2-3 nejdůležitější nedostatky z výše uvedeného seznamu napiš konkrétní doporučení.
-                Ke každému doporučení přidej příklad fráze, kterou by technik mohl použít v komunikaci se zákazníkem.
+                Pro 2-3 nejdůležitější nedostatky z výše uvedeného seznamu napiš konkrétní doporučení. Při formulování doporučení vezmi v potaz i kontext z manuálních poznámek. Ke každému doporučení přidej příklad fráze, kterou by technik mohl použít v komunikaci se zákazníkem.
                 Formátuj odpověď jako seznam s odrážkami. Buď stručný a zaměřený na praxi.
             `;
             const generatedText = await callGeminiAPI(prompt);
