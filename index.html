@@ -240,6 +240,7 @@
             { category: "ODCHOD", items: [
                 { text: "Sdělena výsledná diagnóza / stav zařízení / provedeno čištění", weight: 3 },
                 { text: "Test závady po diagnostice/reinstalaci/čištění", weight: 5 },
+                { text: "Stihnutí času, který byl řečen na začátku", weight: 5 },
                 { text: "Poskytnuta doporučení (častější čištění, jiný postup…)", weight: 5 },
                 { text: "Rozloučení se zákazníkem", weight: 2 }
             ]}
@@ -249,7 +250,8 @@
              { category: "Možné scénáře po diagnostice", items: [
                 { text: "Oprava zařízení", weight: 5 },
                 { text: "Výkup zařízení (pokud se dá vykoupit)", weight: 3 },
-                { text: "Reklamace", weight: 5 }
+                { text: "Reklamace", weight: 5 },
+                { text: "Baterie - kontrola kondice a nabídka řešení", weight: 2}
             ]},
              { category: "Prodej nového zařízení / příslušenství (ACC):", items: [
                 { text: "Nabídnuto nové zařízení", weight: 1 },
@@ -388,22 +390,22 @@
                 const categoryHeader = document.createElement('h3');
                 categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-blue-700';
                 categoryHeader.textContent = cat.category;
-                checklistContainer.appendChild(categoryHeader);
-                cat.items.forEach((item, i) => checklistContainer.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'checklist')));
+                checklistItems.appendChild(categoryHeader);
+                cat.items.forEach((item, i) => checklistItems.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'checklist')));
             });
             scenariosData.forEach(cat => {
                  const categoryHeader = document.createElement('h3');
                 categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-green-700';
                 categoryHeader.textContent = cat.category;
-                scenariosContainer.appendChild(categoryHeader);
-                cat.items.forEach((item, i) => scenariosContainer.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'scenarios')));
+                scenarioItems.appendChild(categoryHeader);
+                cat.items.forEach((item, i) => scenarioItems.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'scenarios')));
             });
             penaltyData.forEach(cat => {
                 const categoryHeader = document.createElement('h3');
                 categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-red-700';
                 categoryHeader.textContent = cat.category;
-                penaltiesContainer.appendChild(categoryHeader);
-                cat.items.forEach((item, i) => penaltiesContainer.appendChild(createPenaltyItem(item, `${cat.category}-${i}`)));
+                penaltyItems.appendChild(categoryHeader);
+                cat.items.forEach((item, i) => penaltyItems.appendChild(createPenaltyItem(item, `${cat.category}-${i}`)));
             });
         }
 
