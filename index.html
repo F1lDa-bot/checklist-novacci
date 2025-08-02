@@ -69,7 +69,7 @@
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Checklist pro Hodnocení Technika</h1>
             <p class="text-gray-600 mt-2">Nástroj pro vyhodnocení interakce technika se zákazníkem s podporou Gemini AI.</p>
@@ -91,47 +91,53 @@
                 </div>
             </div>
 
-            <!-- Checklist -->
-            <div id="checklistContainer" class="bg-white p-6 rounded-xl shadow-md">
-                 <div class="flex justify-between items-center border-b pb-2 mb-6">
-                    <h2 class="text-xl font-bold">Základní Checklist</h2>
-                    <div class="hidden sm:grid grid-cols-4 gap-x-2 text-center font-semibold text-xs sm:text-sm">
-                        <span class="w-16">Váha</span>
-                        <span class="w-16">ANO</span>
-                        <span class="w-16">ČÁSTEČNĚ</span>
-                        <span class="w-16">NE</span>
+            <!-- Dvou-sloupcový layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <!-- Levý sloupec -->
+                <div class="lg:col-span-3 space-y-8">
+                    <div id="checklistContainer" class="bg-white p-6 rounded-xl shadow-md">
+                         <div class="flex justify-between items-center border-b pb-2 mb-6">
+                            <h2 class="text-xl font-bold">Základní Checklist</h2>
+                            <div class="hidden sm:grid grid-cols-4 gap-x-2 text-center font-semibold text-xs sm:text-sm">
+                                <span class="w-16">Váha</span>
+                                <span class="w-16">ANO</span>
+                                <span class="w-16">ČÁSTEČNĚ</span>
+                                <span class="w-16">NE</span>
+                            </div>
+                        </div>
+                        <div id="checklistItems" class="space-y-6">
+                        </div>
                     </div>
                 </div>
-                <div id="checklistItems" class="space-y-6">
-                </div>
-            </div>
 
-            <!-- Mínusové body -->
-            <div id="penaltiesContainer" class="bg-white p-6 rounded-xl shadow-md">
-                 <div class="flex justify-between items-center border-b pb-2 mb-6">
-                    <h2 class="text-xl font-bold text-red-600">Mínusové body</h2>
-                    <div class="hidden sm:grid grid-cols-2 gap-x-4 text-center font-semibold">
-                        <span class="w-20">Penalizace</span>
-                        <span class="w-20">Udělit</span>
+                <!-- Pravý sloupec -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div id="penaltiesContainer" class="bg-white p-6 rounded-xl shadow-md">
+                         <div class="flex justify-between items-center border-b pb-2 mb-6">
+                            <h2 class="text-xl font-bold text-red-600">Mínusové body</h2>
+                            <div class="hidden sm:grid grid-cols-2 gap-x-4 text-center font-semibold">
+                                <span class="w-20">Penalizace</span>
+                                <span class="w-20">Udělit</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Zaškrtněte pro udělení penalizace.</p>
+                        <div id="penaltyItems" class="space-y-6">
+                        </div>
                     </div>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Zaškrtněte pro udělení penalizace, která se odečte od celkového skóre.</p>
-                <div id="penaltyItems" class="space-y-6">
-                </div>
-            </div>
-            
-             <!-- Možné scénáře -->
-            <div id="scenariosContainer" class="bg-white p-6 rounded-xl shadow-md">
-                 <div class="flex justify-between items-center border-b pb-2 mb-6">
-                    <h2 class="text-xl font-bold text-green-600">Bonusové body</h2>
-                     <div class="hidden sm:grid grid-cols-3 gap-x-4 text-center font-semibold">
-                        <span class="w-20">Váha</span>
-                        <span class="w-20">ANO</span>
-                        <span class="w-20">NE</span>
+                    
+                    <div id="scenariosContainer" class="bg-white p-6 rounded-xl shadow-md">
+                         <div class="flex justify-between items-center border-b pb-2 mb-6">
+                            <h2 class="text-xl font-bold text-green-600">Bonusové body</h2>
+                             <div class="hidden sm:grid grid-cols-3 gap-x-4 text-center font-semibold">
+                                <span class="w-20">Váha</span>
+                                <span class="w-20">ANO</span>
+                                <span class="w-20">NE</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">Splnění těchto úkolů přidá plusové body.</p>
+                        <div id="scenarioItems" class="space-y-6">
+                        </div>
                     </div>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Splnění těchto úkolů přidá plusové body, které přispívají k celkové úspěšnosti.</p>
-                <div id="scenarioItems" class="space-y-6">
                 </div>
             </div>
 
