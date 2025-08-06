@@ -5,300 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checklist pro Hodnocení Technika</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .custom-radio {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 1.5rem;
-            height: 1.5rem;
-            border: 2px solid #d1d5db;
-            border-radius: 50%;
-            display: inline-block;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        .custom-radio:checked {
-            border-color: #2563eb;
-            background-color: #2563eb;
-        }
-        .custom-radio:checked::after {
-            content: '';
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 50%;
-            background: white;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .progress-bar, .bonus-bar {
-            transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
-        }
-        .weight-input {
-            width: 60px;
-            text-align: center;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            padding: 0.25rem;
-        }
-        .weight-input:focus {
-            outline: 2px solid #2563eb;
-            border-color: #2563eb;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .custom-radio { appearance: none; -webkit-appearance: none; width: 1.5rem; height: 1.5rem; border: 2px solid #d1d5db; border-radius: 50%; display: inline-block; position: relative; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+        .custom-radio:checked { border-color: #2563eb; background-color: #2563eb; }
+        .custom-radio:checked::after { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .progress-bar, .bonus-bar { transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; }
+        .weight-display { width: 60px; text-align: center; padding: 0.25rem; font-weight: 500; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin: 40px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
     <div class="max-w-7xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Checklist pro Hodnocení Technika</h1>
-            <p class="text-gray-600 mt-2">Nástroj pro vyhodnocení interakce technika se zákazníkem s podporou Gemini AI.</p>
+            <p class="text-gray-600 mt-2">Nástroj pro vyhodnocení interakce technika se zákazníkem.</p>
         </header>
 
-        <main class="space-y-8">
-            <!-- Základní informace -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-bold mb-4 border-b pb-2">Základní údaje</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="technicianName" class="block text-sm font-medium text-gray-700 mb-1">Jméno technika</label>
-                        <input type="text" id="technicianName" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Jan Novák">
-                    </div>
-                    <div>
-                        <label for="evaluationDate" class="block text-sm font-medium text-gray-700 mb-1">Datum hodnocení</label>
-                        <input type="date" id="evaluationDate" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dvou-sloupcový layout -->
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <!-- Levý sloupec -->
-                <div class="lg:col-span-3 space-y-8">
-                    <div id="checklistContainer" class="bg-white p-6 rounded-xl shadow-md">
-                         <div class="flex justify-between items-center border-b pb-2 mb-6">
-                            <h2 class="text-xl font-bold">Základní Checklist</h2>
-                            <div class="hidden sm:grid grid-cols-4 gap-x-2 text-center font-semibold text-xs sm:text-sm">
-                                <span class="w-16">Váha</span>
-                                <span class="w-16">ANO</span>
-                                <span class="w-16">ČÁSTEČNĚ</span>
-                                <span class="w-16">NE</span>
-                            </div>
-                        </div>
-                        <div id="checklistItems" class="space-y-6">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pravý sloupec -->
-                <div class="lg:col-span-2 space-y-8">
-                    <div id="penaltiesContainer" class="bg-white p-6 rounded-xl shadow-md">
-                         <div class="flex justify-between items-center border-b pb-2 mb-6">
-                            <h2 class="text-xl font-bold text-red-600">Mínusové body</h2>
-                            <div class="hidden sm:grid grid-cols-2 gap-x-4 text-center font-semibold">
-                                <span class="w-20">Penalizace</span>
-                                <span class="w-20">Udělit</span>
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-500 mb-4">Zaškrtněte pro udělení penalizace.</p>
-                        <div id="penaltyItems" class="space-y-6">
-                        </div>
-                    </div>
-                    
-                    <div id="scenariosContainer" class="bg-white p-6 rounded-xl shadow-md">
-                         <div class="flex justify-between items-center border-b pb-2 mb-6">
-                            <h2 class="text-xl font-bold text-green-600">Bonusové body</h2>
-                             <div class="hidden sm:grid grid-cols-3 gap-x-4 text-center font-semibold">
-                                <span class="w-20">Váha</span>
-                                <span class="w-20">ANO</span>
-                                <span class="w-20">NE</span>
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-500 mb-4">Splnění těchto úkolů přidá plusové body.</p>
-                        <div id="scenarioItems" class="space-y-6">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Výsledky -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-xl font-bold mb-4 border-b pb-2">Výsledky</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="font-semibold">Součet bodů (základní):</span>
-                        <span id="totalScore" class="text-2xl font-bold text-gray-800">0</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-semibold">Maximální možné body:</span>
-                        <span id="maxScore" class="text-lg font-semibold text-gray-700">0</span>
-                    </div>
-                    <div class="flex justify-between items-center text-green-600">
-                        <span class="font-semibold">Bonusové body:</span>
-                        <span id="bonusPoints" class="text-2xl font-bold">+0</span>
-                    </div>
-                    <div class="flex justify-between items-center text-red-600">
-                        <span class="font-semibold">Mínusové body:</span>
-                        <span id="penaltyPoints" class="text-2xl font-bold">-0</span>
-                    </div>
-                    <hr class="my-2">
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold text-lg">Celkové skóre:</span>
-                        <span id="finalScore" class="text-2xl font-bold text-blue-800">0</span>
-                    </div>
-                    <hr class="my-2">
-                    <div class="space-y-2 pt-2">
-                        <div class="flex justify-between items-center font-bold text-lg">
-                            <span>Celková úspěšnost:</span>
-                            <span id="percentage" class="text-2xl text-blue-600">0%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden">
-                            <div id="progressBar" class="progress-bar h-4" style="width: 0%;"></div>
-                            <div id="bonusBar" class="bonus-bar h-4" style="width: 0%;"></div>
-                        </div>
-                        <div id="legendContainer" class="flex justify-end text-xs mt-1 space-x-4">
-                            <span id="legendBaseSpan" class="flex items-center"><span id="legendBase" class="w-3 h-3 rounded-full mr-1.5"></span>Základní</span>
-                            <span id="legendBonusSpan" class="flex items-center"><span id="legendBonus" class="w-3 h-3 rounded-full mr-1.5"></span>Bonus</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Poznámky s AI -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <div class="flex justify-between items-center border-b pb-2 mb-4">
-                    <h2 class="text-xl font-bold">Poznámky a AI Asistent</h2>
-                    <div id="aiLoader" class="loader hidden"></div>
-                </div>
-                <textarea id="notes" rows="8" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Zde můžete zapsat vlastní postřehy, nebo nechte AI vygenerovat hodnocení na základě výsledků..."></textarea>
-                <div class="mt-4 flex flex-col sm:flex-row gap-3">
-                    <button id="generateFeedbackBtn" class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center gap-2">
-                        ✨ Vygenerovat hodnocení
-                    </button>
-                    <button id="generateImprovementsBtn" class="flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center gap-2">
-                        ✨ Navrhnout zlepšení
-                    </button>
-                </div>
-            </div>
-
-            <!-- Akce -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                 <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button id="exportButton" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300 shadow-md">
-                        Exportovat do Excelu
-                    </button>
-                    <button id="resetButton" class="w-full sm:w-auto flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition duration-300 shadow-md">
-                        Resetovat formulář
-                    </button>
-                </div>
-            </div>
-        </main>
+        <main id="main-content" class="space-y-8 hidden">
+            </main>
+        <div id="loader-container">
+            <div class="loader"></div>
+            <p class="text-center text-gray-600 -mt-8">Načítám data z Google Tabulky...</p>
+        </div>
     </div>
 
     <script>
-        const checklistData = [
-            { category: "PŘÍCHOD ZÁKAZNÍKA", items: [
-                { text: "Přivítání zákazníka", weight: 2 },
-                { text: "Zjištění základních informací o zákazníkovi a zařízení", weight: 2 },
-                { text: "Vysvětlení, co se bude dít během návštěvy", weight: 5 },
-                { text: "Informace o ceně služby a odhadovaném čase", weight: 5 }
-            ]},
-            { category: "ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ", items: [
-                { text: "Co je konkrétně za závadu?", weight: 5 },
-                { text: "Jak se závada projevuje?", weight: 5 },
-                { text: "Jak často se problém vyskytuje?", weight: 3 },
-                { text: "Od kdy problém trvá?", weight: 3 },
-                { text: "Zkoušel už zákazník nějaké kroky k řešení?", weight: 3 },
-                { text: "Vyplnění předávacího protokolu", weight: 4 },
-                { text: "Ukázka a vysvětlení MRI diagnostiky", weight: 4 }
-            ]},
-            { category: "ČEKÁNÍ", items: [
-                { text: "Zákazník informován o čekací době", weight: 5 },
-                { text: "Nabídnuta voda / místo k sezení (Flex table)", weight: 2 }
-            ]},
-            { category: "ODCHOD", items: [
-                { text: "Sdělena výsledná diagnóza / stav zařízení / provedeno čištění", weight: 3 },
-                { text: "Test závady po diagnostice/reinstalaci/čištění", weight: 5 },
-                { text: "Stihnutí času, který byl řečen na začátku", weight: 5 },
-                { text: "Poskytnuta doporučení (častější čištění, jiný postup…)", weight: 5 },
-                { text: "Rozloučení se zákazníkem", weight: 2 }
-            ]}
-        ];
-        
-        const scenariosData = [
-             { category: "Možné scénáře po diagnostice", items: [
-                { text: "Oprava zařízení", weight: 5 },
-                { text: "Výkup zařízení (pokud se dá vykoupit)", weight: 3 },
-                { text: "Reklamace", weight: 5 },
-                { text: "Baterie - kontrola kondice a nabídka řešení", weight: 2}
-            ]},
-             { category: "Prodej nového zařízení / příslušenství (ACC):", items: [
-                { text: "Nabídnuto nové zařízení", weight: 1 },
-                { text: "Zákazník si mohl vyzkoušet jiné", weight: 1 },
-                { text: "Nabídnuto přinést zpět na test", weight: 1 },
-                { text: "Nabídnut doplňkový prodej (kryt, sklo, kabel,…)", weight: 2 }
-            ]}
-        ];
+        const googleSheetLink = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQN4fngrzilEPiNzTEsxMvehRuJ0cJvL5TJGH0UT15WDQeiLKS27_dEPX4qlfyFIVkasX1OKp__CJu3/pub?gid=289605977&single=true&output=csv';
 
-        const penaltyData = [
-            { category: "Nedostatky v komunikaci a postupech", items: [
-                { text: "Technik neinformoval proaktivně o času opravy", weight: -2 },
-                { text: "Technik nevysvětlil proaktivně obsah diagnostiky", weight: -2 },
-                { text: "Nesprávně vyplněný protokol (zásadní chyby)", weight: -1 }
-            ]}
-        ];
+        async function loadDataFromSheet(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Chyba sítě: ${response.statusText}`);
+                const csvText = await response.text();
 
-        const checklistContainer = document.getElementById('checklistItems');
-        const scenariosContainer = document.getElementById('scenarioItems');
-        const penaltiesContainer = document.getElementById('penaltyItems');
-        
-        const totalScoreEl = document.getElementById('totalScore');
-        const maxScoreEl = document.getElementById('maxScore');
-        const bonusPointsEl = document.getElementById('bonusPoints');
-        const penaltyPointsEl = document.getElementById('penaltyPoints');
-        const finalScoreEl = document.getElementById('finalScore');
-        const percentageEl = document.getElementById('percentage');
-        const progressBarEl = document.getElementById('progressBar');
-        const bonusBarEl = document.getElementById('bonusBar');
-        
-        const legendBaseSpan = document.getElementById('legendBaseSpan');
-        const legendBonusSpan = document.getElementById('legendBonusSpan');
-        
-        const exportButton = document.getElementById('exportButton');
-        const resetButton = document.getElementById('resetButton');
-        const technicianNameEl = document.getElementById('technicianName');
-        const evaluationDateEl = document.getElementById('evaluationDate');
-        const notesEl = document.getElementById('notes');
-        const aiLoader = document.getElementById('aiLoader');
-        const generateFeedbackBtn = document.getElementById('generateFeedbackBtn');
-        const generateImprovementsBtn = document.getElementById('generateImprovementsBtn');
+                let lines = csvText.trim().split(/\r\n|\n/);
+                let headerIndex = lines.findIndex(line => line.trim().toLowerCase().startsWith('category,text,weight,type'));
+                if (headerIndex === -1) throw new Error("Záhlaví 'category,text,weight,type' nebylo v souboru nalezeno.");
 
+                const headers = lines[headerIndex].split(',').map(h => h.trim().toLowerCase());
+                const dataLines = lines.slice(headerIndex + 1);
 
+                return dataLines.map(line => {
+                    if (line.trim() === '') return null;
+                    const values = line.match(/(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g) || [];
+                    const obj = {};
+                    headers.forEach((header, i) => {
+                        let value = (values[i] || '').trim().replace(/^"|"$/g, '').replace(/""/g, '"');
+                        obj[header] = value;
+                    });
+                    return obj;
+                }).filter(Boolean);
+
+            } catch (error) {
+                document.getElementById('loader-container').innerHTML = `<p class="text-center text-red-500 font-bold p-4 bg-red-100 rounded-lg">Chyba při načítání dat: ${error.message}</p>`;
+                return null;
+            }
+        }
+        
         function createChecklistItem(item, index, section) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'flex flex-col sm:flex-row sm:items-center justify-between py-2 border-t checklist-item-row';
-            
+            itemDiv.dataset.weight = item.weight;
+
             const textSpan = document.createElement('span');
             textSpan.textContent = item.text;
             textSpan.className = 'flex-1 mb-2 sm:mb-0';
@@ -306,53 +79,30 @@
             const controlsDiv = document.createElement('div');
             controlsDiv.className = 'grid grid-cols-4 gap-x-2 text-center items-center';
             
-            const weightInput = document.createElement('input');
-            weightInput.type = 'number';
-            weightInput.value = item.weight;
-            weightInput.min = 0;
-            weightInput.className = 'weight-input mx-auto';
-            weightInput.dataset.originalWeight = item.weight; 
+            // Zobrazení váhy jako text, ne jako input
+            const weightDisplay = document.createElement('span');
+            weightDisplay.textContent = item.weight;
+            weightDisplay.className = 'weight-display mx-auto';
 
-            const radioYes = document.createElement('input');
-            radioYes.type = 'radio';
-            radioYes.name = `${section}-${index}`;
-            radioYes.value = 'yes';
-            radioYes.className = 'custom-radio mx-auto';
-
-            const radioPartial = document.createElement('input');
-            radioPartial.type = 'radio';
-            radioPartial.name = `${section}-${index}`;
-            radioPartial.value = 'partial';
-            radioPartial.className = 'custom-radio mx-auto';
-
-            const radioNo = document.createElement('input');
-            radioNo.type = 'radio';
-            radioNo.name = `${section}-${index}`;
-            radioNo.value = 'no';
-            radioNo.className = 'custom-radio mx-auto';
+            const radioYes = document.createElement('input'); radioYes.type = 'radio'; radioYes.name = `${section}-${index}`; radioYes.value = 'yes'; radioYes.className = 'custom-radio mx-auto';
+            const radioPartial = document.createElement('input'); radioPartial.type = 'radio'; radioPartial.name = `${section}-${index}`; radioPartial.value = 'partial'; radioPartial.className = 'custom-radio mx-auto';
+            const radioNo = document.createElement('input'); radioNo.type = 'radio'; radioNo.name = `${section}-${index}`; radioNo.value = 'no'; radioNo.className = 'custom-radio mx-auto';
             
-            if (section === 'checklist') {
-                radioNo.checked = true;
-            } else { // Scenarios
-                radioNo.checked = true;
+            radioNo.checked = true;
+            if (section !== 'checklist') {
                 radioPartial.disabled = true;
                 radioPartial.style.visibility = 'hidden';
             }
 
-            controlsDiv.appendChild(weightInput);
+            controlsDiv.appendChild(weightDisplay);
             controlsDiv.appendChild(radioYes);
             if(section === 'checklist') controlsDiv.appendChild(radioPartial);
-            else controlsDiv.appendChild(document.createElement('div')); // Placeholder
+            else controlsDiv.appendChild(document.createElement('div'));
             controlsDiv.appendChild(radioNo);
-
             itemDiv.appendChild(textSpan);
             itemDiv.appendChild(controlsDiv);
 
-            radioYes.addEventListener('change', calculateScore);
-            radioPartial.addEventListener('change', calculateScore);
-            radioNo.addEventListener('change', calculateScore);
-            weightInput.addEventListener('input', calculateScore);
-
+            [radioYes, radioPartial, radioNo].forEach(el => el.addEventListener('change', calculateScore));
             return itemDiv;
         }
 
@@ -360,356 +110,154 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'flex flex-col sm:flex-row sm:items-center justify-between py-2 border-t penalty-item-row';
             
-            const textSpan = document.createElement('span');
-            textSpan.textContent = item.text;
-            textSpan.className = 'flex-1 mb-2 sm:mb-0';
-
-            const controlsDiv = document.createElement('div');
-            controlsDiv.className = 'grid grid-cols-2 gap-x-4 text-center items-center';
-
-            const weightSpan = document.createElement('span');
-            weightSpan.textContent = item.weight;
-            weightSpan.className = 'w-20 font-bold text-red-500';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'h-6 w-6 rounded border-gray-300 text-red-600 focus:ring-red-500 mx-auto';
-            checkbox.dataset.weight = item.weight;
+            const textSpan = document.createElement('span'); textSpan.textContent = item.text; textSpan.className = 'flex-1 mb-2 sm:mb-0';
+            const controlsDiv = document.createElement('div'); controlsDiv.className = 'grid grid-cols-2 gap-x-4 text-center items-center';
+            const weightSpan = document.createElement('span'); weightSpan.textContent = item.weight; weightSpan.className = 'w-20 font-bold text-red-500';
+            const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.className = 'h-6 w-6 rounded border-gray-300 text-red-600 focus:ring-red-500 mx-auto'; checkbox.dataset.weight = item.weight;
             
             controlsDiv.appendChild(weightSpan);
             controlsDiv.appendChild(checkbox);
             itemDiv.appendChild(textSpan);
             itemDiv.appendChild(controlsDiv);
-
             checkbox.addEventListener('change', calculateScore);
             return itemDiv;
         }
 
-        function renderAll() {
-            checklistData.forEach(cat => {
-                const categoryHeader = document.createElement('h3');
-                categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-blue-700';
-                categoryHeader.textContent = cat.category;
-                checklistItems.appendChild(categoryHeader);
-                cat.items.forEach((item, i) => checklistItems.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'checklist')));
-            });
-            scenariosData.forEach(cat => {
-                 const categoryHeader = document.createElement('h3');
-                categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-green-700';
-                categoryHeader.textContent = cat.category;
-                scenarioItems.appendChild(categoryHeader);
-                cat.items.forEach((item, i) => scenarioItems.appendChild(createChecklistItem(item, `${cat.category}-${i}`, 'scenarios')));
-            });
-            penaltyData.forEach(cat => {
-                const categoryHeader = document.createElement('h3');
-                categoryHeader.className = 'text-lg font-semibold mt-6 mb-2 text-red-700';
-                categoryHeader.textContent = cat.category;
-                penaltyItems.appendChild(categoryHeader);
-                cat.items.forEach((item, i) => penaltyItems.appendChild(createPenaltyItem(item, `${cat.category}-${i}`)));
-            });
+        function renderAll(checklistData, scenariosData, penaltyData) {
+            const checklistItemsEl = document.getElementById('checklistItems');
+            const scenarioItemsEl = document.getElementById('scenarioItems');
+            const penaltyItemsEl = document.getElementById('penaltyItems');
+
+            const renderCategory = (container, data, itemCreator, section) => {
+                const categories = [...new Set(data.map(item => item.category))];
+                categories.forEach(cat => {
+                    if(!cat) return;
+                    const categoryHeader = document.createElement('h3');
+                    let colorClass = 'text-blue-700';
+                    if (section === 'bonus') colorClass = 'text-green-700';
+                    if (section === 'penalty') colorClass = 'text-red-700';
+                    categoryHeader.className = `text-lg font-semibold mt-6 mb-2 ${colorClass}`;
+                    categoryHeader.textContent = cat;
+                    container.appendChild(categoryHeader);
+                    data.filter(item => item.category === cat).forEach((item, i) => container.appendChild(itemCreator(item, `${cat.replace(/\s/g, '')}-${i}`, section)));
+                });
+            };
+
+            renderCategory(checklistItemsEl, checklistData, createChecklistItem, 'checklist');
+            renderCategory(scenarioItemsEl, scenariosData, createChecklistItem, 'bonus');
+            renderCategory(penaltyItemsEl, penaltyData, createPenaltyItem, 'penalty');
         }
 
         function calculateScore() {
-            let currentScore = 0;
-            let maxScore = 0;
-            let bonusPoints = 0;
-            let penaltyPoints = 0;
+            let currentScore = 0, maxScore = 0, bonusPoints = 0, penaltyPoints = 0;
 
-            checklistContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const weight = parseInt(row.querySelector('.weight-input').value) || 0;
+            document.querySelectorAll('#checklistContainer .checklist-item-row').forEach(row => {
+                const weight = parseInt(row.dataset.weight) || 0;
                 maxScore += weight;
                 const selected = row.querySelector('input[type="radio"]:checked').value;
-                if (selected === 'yes') {
-                    currentScore += weight;
-                } else if (selected === 'partial') {
-                    currentScore += weight / 2;
-                }
+                if (selected === 'yes') currentScore += weight;
+                else if (selected === 'partial') currentScore += weight / 2;
             });
             
-            scenariosContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const weight = parseInt(row.querySelector('.weight-input').value) || 0;
-                if (row.querySelector('input[value="yes"]').checked) {
-                    bonusPoints += weight;
-                }
+            document.querySelectorAll('#scenariosContainer .checklist-item-row').forEach(row => {
+                const weight = parseInt(row.dataset.weight) || 0;
+                if (row.querySelector('input[value="yes"]').checked) bonusPoints += weight;
             });
 
-            penaltiesContainer.querySelectorAll('.penalty-item-row').forEach(row => {
-                const checkbox = row.querySelector('input[type="checkbox"]');
-                if (checkbox.checked) {
-                    penaltyPoints += parseInt(checkbox.dataset.weight);
-                }
+            document.querySelectorAll('#penaltiesContainer .penalty-item-row').forEach(row => {
+                if (row.querySelector('input[type="checkbox"]').checked) penaltyPoints += parseInt(row.querySelector('input[type="checkbox"]').dataset.weight);
             });
 
             const finalScore = currentScore + bonusPoints + penaltyPoints;
-            const basePercentage = maxScore > 0 ? (currentScore / maxScore) * 100 : 0;
-            const totalPercentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0;
-            const bonusPercentage = maxScore > 0 ? (bonusPoints / maxScore) * 100 : 0;
-
-            totalScoreEl.textContent = currentScore.toFixed(1);
-            maxScoreEl.textContent = maxScore;
-            bonusPointsEl.textContent = `+${bonusPoints}`;
-            penaltyPointsEl.textContent = `${penaltyPoints}`;
-            finalScoreEl.textContent = finalScore.toFixed(1);
-            percentageEl.textContent = `${totalPercentage}%`;
+            const percentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0;
             
-            progressBarEl.style.width = `${basePercentage}%`;
-            bonusBarEl.style.width = `${bonusPercentage}%`;
-            
-            const baseColorClasses = ['bg-red-600', 'bg-yellow-500', 'bg-green-500'];
-            const bonusColorClass = 'bg-teal-500';
-            const successColorClass = 'bg-green-500';
-
-            progressBarEl.classList.remove(...baseColorClasses, bonusColorClass);
-            bonusBarEl.classList.remove(...baseColorClasses, bonusColorClass);
-
-            if (totalPercentage >= 80) {
-                progressBarEl.classList.add(successColorClass);
-                bonusBarEl.classList.add(successColorClass);
-                legendBaseSpan.innerHTML = `<span class="w-3 h-3 ${successColorClass} rounded-full mr-1.5"></span>Splněno`;
-                legendBonusSpan.style.display = 'none';
-            } else {
-                let baseColor;
-                if (basePercentage < 50) baseColor = 'bg-red-600';
-                else if (basePercentage < 80) baseColor = 'bg-yellow-500';
-                else baseColor = 'bg-green-500';
-                
-                progressBarEl.classList.add(baseColor);
-                bonusBarEl.classList.add(bonusColorClass);
-
-                legendBaseSpan.innerHTML = `<span id="legendBase" class="w-3 h-3 ${baseColor} rounded-full mr-1.5"></span>Základní`;
-                legendBonusSpan.innerHTML = `<span id="legendBonus" class="w-3 h-3 ${bonusColorClass} rounded-full mr-1.5"></span>Bonus`;
-                legendBonusSpan.style.display = 'flex';
-            }
+            document.getElementById('totalScore').textContent = currentScore.toFixed(1);
+            document.getElementById('maxScore').textContent = maxScore;
+            document.getElementById('bonusPoints').textContent = `+${bonusPoints}`;
+            document.getElementById('penaltyPoints').textContent = `${penaltyPoints}`;
+            document.getElementById('finalScore').textContent = finalScore.toFixed(1);
+            document.getElementById('percentage').textContent = `${percentage}%`;
         }
         
         function resetForm() {
             if (confirm('Opravdu chcete smazat všechny údaje a začít znovu?')) {
                 document.querySelectorAll('input[type="radio"][value="no"]').forEach(r => r.checked = true);
                 document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-                document.querySelectorAll('.weight-input').forEach(i => i.value = i.dataset.originalWeight);
-                technicianNameEl.value = '';
-                evaluationDateEl.valueAsDate = new Date();
-                notesEl.value = '';
+                document.getElementById('technicianName').value = '';
+                document.getElementById('evaluationDate').valueAsDate = new Date();
                 calculateScore();
             }
         }
 
-        function exportToExcel() {
-            const technicianName = technicianNameEl.value || 'Nezadáno';
-            const evaluationDate = evaluationDateEl.value ? new Date(evaluationDateEl.value).toLocaleDateString('cs-CZ') : 'Nezadáno';
-            const notes = notesEl.value;
-            const wb = XLSX.utils.book_new();
-            
-            const summaryData = [
-                ["Hodnocení Technika"], [],
-                ["Jméno technika:", technicianName], ["Datum:", evaluationDate], [],
-                ["VÝSLEDKY"],
-                ["Základní body:", totalScoreEl.textContent],
-                ["Max. možných bodů:", maxScoreEl.textContent],
-                ["Bonusové body:", bonusPointsEl.textContent],
-                ["Mínusové body:", penaltyPointsEl.textContent],
-                ["Celkové skóre:", finalScoreEl.textContent],
-                ["Celková úspěšnost:", percentageEl.textContent], [],
-                ["POZNÁMKY"], [notes]
-            ];
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "Přehled");
+        document.addEventListener('DOMContentLoaded', async () => {
+            const allData = await loadDataFromSheet(googleSheetLink);
+            if (!allData) return;
 
-            const checklistExport = [["KATEGORIE", "POLOŽKA", "VÁHA", "VÝSLEDEK"]];
-            checklistContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const cat = row.closest('div').querySelector('h3')?.textContent || row.parentElement.previousElementSibling.textContent;
-                const text = row.querySelector('span').textContent;
-                const weight = row.querySelector('.weight-input').value;
-                const result = row.querySelector('input[type="radio"]:checked').value.toUpperCase();
-                checklistExport.push([cat, text, weight, result]);
-            });
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(checklistExport), "Základní Checklist");
+            const checklistData = allData.filter(d => d.type === 'checklist');
+            const scenariosData = allData.filter(d => d.type === 'bonus');
+            const penaltyData = allData.filter(d => d.type === 'penalty');
 
-            const bonusExport = [["KATEGORIE", "POLOŽKA", "VÁHA", "VÝSLEDEK"]];
-            scenariosContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const cat = row.closest('div').querySelector('h3')?.textContent || row.parentElement.previousElementSibling.textContent;
-                const text = row.querySelector('span').textContent;
-                const weight = row.querySelector('.weight-input').value;
-                const result = row.querySelector('input[value="yes"]').checked ? 'ANO' : 'NE';
-                bonusExport.push([cat, text, weight, result]);
-            });
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(bonusExport), "Bonusové Scénáře");
-            
-            const penaltyExport = [["KATEGORIE", "PROHŘEŠEK", "PENALIZACE", "UDĚLENO"]];
-            penaltiesContainer.querySelectorAll('.penalty-item-row').forEach(row => {
-                const cat = row.closest('div').querySelector('h3')?.textContent || row.parentElement.previousElementSibling.textContent;
-                const text = row.querySelector('span').textContent;
-                const weight = row.querySelector('input[type="checkbox"]').dataset.weight;
-                const result = row.querySelector('input[type="checkbox"]').checked ? 'ANO' : 'NE';
-                penaltyExport.push([cat, text, weight, result]);
-            });
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(penaltyExport), "Mínusové body");
-            
-            XLSX.writeFile(wb, `Hodnoceni_${technicianName.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        }
-        
-        // --- Gemini AI Integration ---
-
-        function getEvaluationData() {
-            const data = {
-                technicianName: technicianNameEl.value || 'Neznámý technik',
-                totalPercentage: percentageEl.textContent,
-                basePoints: totalScoreEl.textContent,
-                maxPoints: maxScoreEl.textContent,
-                bonusPoints: bonusPointsEl.textContent,
-                penaltyPoints: penaltyPointsEl.textContent,
-                strengths: [],
-                weaknesses: [],
-                bonuses: [],
-                penalties: [],
-                manualNotes: notesEl.value
-            };
-
-            checklistContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                const text = row.querySelector('span').textContent;
-                const result = row.querySelector('input[type="radio"]:checked').value;
-                if (result === 'yes') data.strengths.push(text);
-                if (result === 'partial' || result === 'no') data.weaknesses.push(`${text} (Výsledek: ${result.toUpperCase()})`);
-            });
-
-            scenariosContainer.querySelectorAll('.checklist-item-row').forEach(row => {
-                if (row.querySelector('input[value="yes"]').checked) {
-                    data.bonuses.push(row.querySelector('span').textContent);
-                }
-            });
-
-            penaltiesContainer.querySelectorAll('.penalty-item-row').forEach(row => {
-                if (row.querySelector('input[type="checkbox"]').checked) {
-                    data.penalties.push(row.querySelector('span').textContent);
-                }
-            });
-            
-            return data;
-        }
-
-        async function callGeminiAPI(prompt, retries = 3, delay = 1000) {
-            aiLoader.classList.remove('hidden');
-            generateFeedbackBtn.disabled = true;
-            generateImprovementsBtn.disabled = true;
-
-            const apiKey = "AIzaSyAHnMJoLGBOZxv045gF8f4N2xZ7VPT5U64"; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: prompt }] }]
-            };
-
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        
-                        aiLoader.classList.add('hidden');
-                        generateFeedbackBtn.disabled = false;
-                        generateImprovementsBtn.disabled = false;
-                        return result.candidates[0].content.parts[0].text;
-                    } else {
-                        throw new Error("Invalid response structure from API.");
-                    }
-                } catch (error) {
-                    if (i === retries - 1) {
-                        notesEl.value = `Došlo k chybě při komunikaci s AI. Zkuste to prosím znovu později. Chyba: ${error.message}`;
-                        aiLoader.classList.add('hidden');
-                        generateFeedbackBtn.disabled = false;
-                        generateImprovementsBtn.disabled = false;
-                        return null;
-                    }
-                    await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
-                }
-            }
-        }
-
-        generateFeedbackBtn.addEventListener('click', async () => {
-            const data = getEvaluationData();
-            const prompt = `
-                Jsi manažer kvality v servisním centru a píšeš slovní hodnocení pro technika.
-                Na základě následujících strukturovaných dat a manuálních poznámek napiš profesionální, stručné a konstruktivní hodnocení.
-                
-                **Data pro hodnocení:**
-                - **Jméno technika:** ${data.technicianName}
-                - **Celková úspěšnost:** ${data.totalPercentage}
-                - **Základní body:** ${data.basePoints} z ${data.maxPoints}
-                - **Bonusové body:** ${data.bonusPoints}
-                - **Mínusové body:** ${data.penaltyPoints}
-
-                **Manuální poznámky od hodnotícího (tyto mají vysokou prioritu a měly by být zohledněny):**
-                ${data.manualNotes || 'Žádné.'}
-
-                **Silné stránky (splněno na ANO):**
-                ${data.strengths.length > 0 ? data.strengths.map(s => `- ${s}`).join('\n') : '- Žádné zaznamenané.'}
-
-                **Oblasti pro zlepšení (splněno na ČÁSTEČNĚ nebo NE):**
-                ${data.weaknesses.length > 0 ? data.weaknesses.map(w => `- ${w}`).join('\n') : '- Žádné zaznamenané.'}
-
-                **Získané bonusové body:**
-                ${data.bonuses.length > 0 ? data.bonuses.map(b => `- ${b}`).join('\n') : '- Žádné.'}
-
-                **Udělené penalizace:**
-                ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'}
-
-                **Tvoje úloha:**
-                Napiš slovní hodnocení, které začíná celkovým shrnutím. Poté zkombinuj informace ze strukturovaných dat s kvalitativními postřehy z manuálních poznámek. Vytvoř souvislý text, který integruje obě perspektivy. Použij formátování s odrážkami pro přehlednost. Na závěr přidej pozitivní a motivující větu.
+            document.getElementById('loader-container').style.display = 'none';
+            const mainContentEl = document.getElementById('main-content');
+            mainContentEl.classList.remove('hidden');
+            mainContentEl.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Základní údaje</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label for="technicianName" class="block text-sm font-medium text-gray-700 mb-1">Jméno technika</label><input type="text" id="technicianName" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Jan Novák"></div>
+                        <div><label for="evaluationDate" class="block text-sm font-medium text-gray-700 mb-1">Datum hodnocení</label><input type="date" id="evaluationDate" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3 space-y-8">
+                        <div id="checklistContainer" class="bg-white p-6 rounded-xl shadow-md">
+                            <div class="flex justify-between items-center border-b pb-2 mb-6">
+                                <h2 class="text-xl font-bold">Základní Checklist</h2>
+                                <div class="hidden sm:grid grid-cols-4 gap-x-2 text-center font-semibold text-xs sm:text-sm"><span class="w-16">Váha</span><span class="w-16">ANO</span><span class="w-16">ČÁST.</span><span class="w-16">NE</span></div>
+                            </div>
+                            <div id="checklistItems" class="space-y-6"></div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 space-y-8">
+                        <div id="penaltiesContainer" class="bg-white p-6 rounded-xl shadow-md">
+                           <div class="flex justify-between items-center border-b pb-2 mb-6">
+                                <h2 class="text-xl font-bold text-red-600">Mínusové body</h2>
+                                <div class="hidden sm:grid grid-cols-2 gap-x-4 text-center font-semibold"><span class="w-20">Penalizace</span><span class="w-20">Udělit</span></div>
+                            </div>
+                            <div id="penaltyItems" class="space-y-6"></div>
+                        </div>
+                        <div id="scenariosContainer" class="bg-white p-6 rounded-xl shadow-md">
+                            <div class="flex justify-between items-center border-b pb-2 mb-6">
+                                <h2 class="text-xl font-bold text-green-600">Bonusové body</h2>
+                                <div class="hidden sm:grid grid-cols-3 gap-x-4 text-center font-semibold"><span class="w-20">Váha</span><span class="w-20">ANO</span><span class="w-20">NE</span></div>
+                            </div>
+                            <div id="scenarioItems" class="space-y-6"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Výsledky</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center"><span class="font-semibold">Součet bodů (základní):</span><span id="totalScore" class="text-2xl font-bold text-gray-800">0</span></div>
+                        <div class="flex justify-between items-center"><span class="font-semibold">Maximální možné body:</span><span id="maxScore" class="text-lg font-semibold text-gray-700">0</span></div>
+                        <div class="flex justify-between items-center text-green-600"><span class="font-semibold">Bonusové body:</span><span id="bonusPoints" class="text-2xl font-bold">+0</span></div>
+                        <div class="flex justify-between items-center text-red-600"><span class="font-semibold">Mínusové body:</span><span id="penaltyPoints" class="text-2xl font-bold">-0</span></div>
+                        <hr class="my-2"><div class="flex justify-between items-center"><span class="font-bold text-lg">Celkové skóre:</span><span id="finalScore" class="text-2xl font-bold text-blue-800">0</span></div>
+                        <hr class="my-2"><div class="flex justify-between items-center font-bold text-lg"><span>Celková úspěšnost:</span><span id="percentage" class="text-2xl text-blue-600">0%</span></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button id="resetButton" class="w-full sm:w-auto flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700">Resetovat formulář</button>
+                    </div>
+                </div>
             `;
-            const generatedText = await callGeminiAPI(prompt);
-            if (generatedText) {
-                notesEl.value = generatedText;
-            }
-        });
-
-        generateImprovementsBtn.addEventListener('click', async () => {
-            const data = getEvaluationData();
-            if (data.weaknesses.length === 0 && data.penalties.length === 0) {
-                notesEl.value = "Skvělá práce! Nebyly nalezeny žádné konkrétní oblasti pro zlepšení.";
-                return;
-            }
-
-            const prompt = `
-                Jsi zkušený trenér pro techniky v servisním centru.
-                Na základě následujícího seznamu nedostatků a kontextu z manuálních poznámek navrhni konkrétní a praktické tipy pro zlepšení.
-
-                **Seznam nedostatků technika (${data.technicianName}):**
-                **Body, kde došlo ke ztrátě bodů:**
-                ${data.weaknesses.length > 0 ? data.weaknesses.map(w => `- ${w}`).join('\n') : '- Žádné.'}
-                
-                **Udělené penalizace:**
-                ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'}
-
-                **Kontext z manuálních poznámek hodnotícího:**
-                ${data.manualNotes || 'Žádné.'}
-
-                **Tvoje úloha:**
-                Pro 2-3 nejdůležitější nedostatky z výše uvedeného seznamu napiš konkrétní doporučení. Při formulování doporučení vezmi v potaz i kontext z manuálních poznámek. Ke každému doporučení přidej příklad fráze, kterou by technik mohl použít v komunikaci se zákazníkem.
-                Formátuj odpověď jako seznam s odrážkami. Buď stručný a zaměřený na praxi.
-            `;
-            const generatedText = await callGeminiAPI(prompt);
-            if (generatedText) {
-                notesEl.value = generatedText;
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            renderAll();
-            evaluationDateEl.valueAsDate = new Date();
+            
+            renderAll(checklistData, scenariosData, penaltyData);
+            document.getElementById('evaluationDate').valueAsDate = new Date();
             calculateScore();
-            exportButton.addEventListener('click', exportToExcel);
-            resetButton.addEventListener('click', resetForm);
+            document.getElementById('resetButton').addEventListener('click', resetForm);
         });
     </script>
 </body>
