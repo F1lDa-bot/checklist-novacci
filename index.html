@@ -15,7 +15,8 @@
         .custom-radio:checked::after { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .progress-bar, .bonus-bar { transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; }
         .weight-display { width: 60px; text-align: center; padding: 0.25rem; font-weight: 500; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin: 40px auto; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .ai-loader { margin: 0; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -23,14 +24,14 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Checklist pro Hodnocení Technika</h1>
-            <p class="text-gray-600 mt-2">Nástroj pro vyhodnocení interakce technika se zákazníkem.</p>
+            <p class="text-gray-600 mt-2">Nástroj pro vyhodnocení interakce technika se zákazníkem s podporou Gemini AI.</p>
         </header>
 
         <main id="main-content" class="space-y-8 hidden">
             </main>
         <div id="loader-container">
-            <div class="loader"></div>
-            <p class="text-center text-gray-600 -mt-8">Načítám data z Google Tabulky...</p>
+            <div class="loader mx-auto"></div>
+            <p class="text-center text-gray-600 mt-4">Načítám data z Google Tabulky...</p>
         </div>
     </div>
 
@@ -45,7 +46,7 @@
 
                 let lines = csvText.trim().split(/\r\n|\n/);
                 let headerIndex = lines.findIndex(line => line.trim().toLowerCase().startsWith('category,text,weight,type'));
-                if (headerIndex === -1) throw new Error("Záhlaví 'category,text,weight,type' nebylo v souboru nalezeno.");
+                if (headerIndex === -1) throw new Error("V souboru nebylo nalezeno záhlaví 'category,text,weight,type'. Zkontrolujte prosím první řádek v Google Tabulce.");
 
                 const headers = lines[headerIndex].split(',').map(h => h.trim().toLowerCase());
                 const dataLines = lines.slice(headerIndex + 1);
@@ -79,7 +80,6 @@
             const controlsDiv = document.createElement('div');
             controlsDiv.className = 'grid grid-cols-4 gap-x-2 text-center items-center';
             
-            // Zobrazení váhy jako text, ne jako input
             const weightDisplay = document.createElement('span');
             weightDisplay.textContent = item.weight;
             weightDisplay.className = 'weight-display mx-auto';
@@ -169,14 +169,29 @@
             });
 
             const finalScore = currentScore + bonusPoints + penaltyPoints;
-            const percentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0;
-            
+            const basePercentage = maxScore > 0 ? (currentScore / maxScore) * 100 : 0;
+            const bonusPercentage = maxScore > 0 ? (bonusPoints / maxScore) * 100 : 0;
+            const totalPercentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0;
+
             document.getElementById('totalScore').textContent = currentScore.toFixed(1);
             document.getElementById('maxScore').textContent = maxScore;
             document.getElementById('bonusPoints').textContent = `+${bonusPoints}`;
             document.getElementById('penaltyPoints').textContent = `${penaltyPoints}`;
             document.getElementById('finalScore').textContent = finalScore.toFixed(1);
-            document.getElementById('percentage').textContent = `${percentage}%`;
+            document.getElementById('percentage').textContent = `${totalPercentage}%`;
+            
+            const progressBarEl = document.getElementById('progressBar');
+            const bonusBarEl = document.getElementById('bonusBar');
+            progressBarEl.style.width = `${basePercentage}%`;
+            bonusBarEl.style.width = `${bonusPercentage}%`;
+
+            let baseColor;
+            if (basePercentage < 50) baseColor = 'bg-red-600';
+            else if (basePercentage < 80) baseColor = 'bg-yellow-500';
+            else baseColor = 'bg-green-500';
+            
+            progressBarEl.className = 'progress-bar h-4 ' + baseColor;
+            bonusBarEl.className = 'bonus-bar h-4 bg-teal-500';
         }
         
         function resetForm() {
@@ -185,14 +200,74 @@
                 document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
                 document.getElementById('technicianName').value = '';
                 document.getElementById('evaluationDate').valueAsDate = new Date();
+                document.getElementById('notes').value = '';
                 calculateScore();
+            }
+        }
+
+        function getEvaluationData() {
+            const data = {
+                technicianName: document.getElementById('technicianName').value || 'Neznámý technik',
+                totalPercentage: document.getElementById('percentage').textContent,
+                basePoints: document.getElementById('totalScore').textContent,
+                maxPoints: document.getElementById('maxScore').textContent,
+                bonusPoints: document.getElementById('bonusPoints').textContent,
+                penaltyPoints: document.getElementById('penaltyPoints').textContent,
+                strengths: [],
+                weaknesses: [],
+                bonuses: [],
+                penalties: [],
+                manualNotes: document.getElementById('notes').value
+            };
+
+            document.querySelectorAll('#checklistContainer .checklist-item-row').forEach(row => {
+                const text = row.querySelector('span').textContent;
+                const result = row.querySelector('input[type="radio"]:checked').value;
+                if (result === 'yes') data.strengths.push(text);
+                if (result === 'partial' || result === 'no') data.weaknesses.push(`${text} (Výsledek: ${result.toUpperCase()})`);
+            });
+            document.querySelectorAll('#scenariosContainer .checklist-item-row').forEach(row => {
+                if (row.querySelector('input[value="yes"]').checked) data.bonuses.push(row.querySelector('span').textContent);
+            });
+            document.querySelectorAll('#penaltiesContainer .penalty-item-row').forEach(row => {
+                if (row.querySelector('input[type="checkbox"]').checked) data.penalties.push(row.querySelector('span').textContent);
+            });
+            return data;
+        }
+
+        async function callGeminiAPI(prompt) {
+            document.getElementById('aiLoader').classList.remove('hidden');
+            document.getElementById('generateFeedbackBtn').disabled = true;
+            document.getElementById('generateImprovementsBtn').disabled = true;
+
+            const apiKey = "AIzaSyAHnMJoLGBOZxv045gF8f4N2xZ7VPT5U64"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                return result.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Chyba při volání Gemini API:", error);
+                return `Došlo k chybě při komunikaci s AI. Zkontrolujte API klíč a připojení k internetu. Chyba: ${error.message}`;
+            } finally {
+                document.getElementById('aiLoader').classList.add('hidden');
+                document.getElementById('generateFeedbackBtn').disabled = false;
+                document.getElementById('generateImprovementsBtn').disabled = false;
             }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const allData = await loadDataFromSheet(googleSheetLink);
             if (!allData) return;
-
+            
             const checklistData = allData.filter(d => d.type === 'checklist');
             const scenariosData = allData.filter(d => d.type === 'bonus');
             const penaltyData = allData.filter(d => d.type === 'penalty');
@@ -243,11 +318,32 @@
                         <div class="flex justify-between items-center text-green-600"><span class="font-semibold">Bonusové body:</span><span id="bonusPoints" class="text-2xl font-bold">+0</span></div>
                         <div class="flex justify-between items-center text-red-600"><span class="font-semibold">Mínusové body:</span><span id="penaltyPoints" class="text-2xl font-bold">-0</span></div>
                         <hr class="my-2"><div class="flex justify-between items-center"><span class="font-bold text-lg">Celkové skóre:</span><span id="finalScore" class="text-2xl font-bold text-blue-800">0</span></div>
-                        <hr class="my-2"><div class="flex justify-between items-center font-bold text-lg"><span>Celková úspěšnost:</span><span id="percentage" class="text-2xl text-blue-600">0%</span></div>
+                        <hr class="my-2">
+                        <div class="space-y-2 pt-2">
+                            <div class="flex justify-between items-center font-bold text-lg">
+                                <span>Celková úspěšnost:</span>
+                                <span id="percentage" class="text-2xl text-blue-600">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden">
+                                <div id="progressBar" class="progress-bar h-4"></div>
+                                <div id="bonusBar" class="bonus-bar h-4"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-xl font-bold">Poznámky a AI Asistent</h2>
+                        <div id="aiLoader" class="loader ai-loader hidden"></div>
+                    </div>
+                    <textarea id="notes" rows="8" class="w-full p-3 border border-gray-300 rounded-md shadow-sm" placeholder="Zde můžete zapsat vlastní postřehy, nebo nechte AI vygenerovat hodnocení na základě výsledků..."></textarea>
+                    <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                        <button id="generateFeedbackBtn" class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">✨ Vygenerovat hodnocení</button>
+                        <button id="generateImprovementsBtn" class="flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2">✨ Navrhnout zlepšení</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                     <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
                     <div class="flex flex-col sm:flex-row gap-4">
                         <button id="resetButton" class="w-full sm:w-auto flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700">Resetovat formulář</button>
                     </div>
@@ -258,6 +354,24 @@
             document.getElementById('evaluationDate').valueAsDate = new Date();
             calculateScore();
             document.getElementById('resetButton').addEventListener('click', resetForm);
+
+            document.getElementById('generateFeedbackBtn').addEventListener('click', async () => {
+                const data = getEvaluationData();
+                const prompt = `Jsi manažer kvality v servisním centru a píšeš slovní hodnocení pro technika. Na základě následujících strukturovaných dat a manuálních poznámek napiš profesionální, stručné a konstruktivní hodnocení. **Data pro hodnocení:** - **Jméno technika:** ${data.technicianName} - **Celková úspěšnost:** ${data.totalPercentage} - **Základní body:** ${data.basePoints} z ${data.maxPoints} - **Bonusové body:** ${data.bonusPoints} - **Mínusové body:** ${data.penaltyPoints} **Manuální poznámky od hodnotícího (tyto mají vysokou prioritu a měly by být zohledněny):** ${data.manualNotes || 'Žádné.'} **Silné stránky (splněno na ANO):** ${data.strengths.length > 0 ? data.strengths.map(s => `- ${s}`).join('\n') : '- Žádné zaznamenané.'} **Oblasti pro zlepšení (splněno na ČÁSTEČNĚ nebo NE):** ${data.weaknesses.length > 0 ? data.weaknesses.map(w => `- ${w}`).join('\n') : '- Žádné zaznamenané.'} **Získané bonusové body:** ${data.bonuses.length > 0 ? data.bonuses.map(b => `- ${b}`).join('\n') : '- Žádné.'} **Udělené penalizace:** ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'} **Tvoje úloha:** Napiš slovní hodnocení, které začíná celkovým shrnutím. Poté zkombinuj informace ze strukturovaných dat s kvalitativními postřehy z manuálních poznámek. Vytvoř souvislý text, který integruje obě perspektivy. Použij formátování s odrážkami pro přehlednost. Na závěr přidej pozitivní a motivující větu.`;
+                const generatedText = await callGeminiAPI(prompt);
+                if(generatedText) document.getElementById('notes').value = generatedText;
+            });
+
+            document.getElementById('generateImprovementsBtn').addEventListener('click', async () => {
+                const data = getEvaluationData();
+                if (data.weaknesses.length === 0 && data.penalties.length === 0) {
+                    document.getElementById('notes').value = "Skvělá práce! Nebyly nalezeny žádné konkrétní oblasti pro zlepšení.";
+                    return;
+                }
+                const prompt = `Jsi zkušený trenér pro techniky v servisním centru. Na základě následujícího seznamu nedostatků a kontextu z manuálních poznámek navrhni konkrétní a praktické tipy pro zlepšení. **Seznam nedostatků technika (${data.technicianName}):** **Body, kde došlo ke ztrátě bodů:** ${data.weaknesses.length > 0 ? data.weaknesses.map(w => `- ${w}`).join('\n') : '- Žádné.'} **Udělené penalizace:** ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'} **Kontext z manuálních poznámek hodnotícího:** ${data.manualNotes || 'Žádné.'} **Tvoje úloha:** Pro 2-3 nejdůležitější nedostatky z výše uvedeného seznamu napiš konkrétní doporučení. Při formulování doporučení vezmi v potaz i kontext z manuálních poznámek. Ke každému doporučení přidej příklad fráze, kterou by technik mohl použít v komunikaci se zákazníkem. Formátuj odpověď jako seznam s odrážkami. Buď stručný a zaměřený na praxi.`;
+                const generatedText = await callGeminiAPI(prompt);
+                if(generatedText) document.getElementById('notes').value = generatedText;
+            });
         });
     </script>
 </body>
