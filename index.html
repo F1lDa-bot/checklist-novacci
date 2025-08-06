@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checklist pro Hodnocení Technika</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,12 +34,10 @@
             <div class="loader mx-auto"></div>
             <p class="text-center text-gray-600 mt-4">Načítám data z Google Tabulky...</p>
         </div>
-        <canvas id="pdfChart" class="hidden"></canvas>
     </div>
 
     <script>
         const googleSheetLink = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQN4fngrzilEPiNzTEsxMvehRuJ0cJvL5TJGH0UT15WDQeiLKS27_dEPX4qlfyFIVkasX1OKp__CJu3/pub?gid=289605977&single=true&output=csv';
-        const { jsPDF } = window.jspdf;
 
         async function loadDataFromSheet(url) {
             try {
@@ -49,7 +46,7 @@
                 const csvText = await response.text();
                 let lines = csvText.trim().split(/\r\n|\n/);
                 let headerIndex = lines.findIndex(line => line.trim().toLowerCase().startsWith('category,text,weight,type'));
-                if (headerIndex === -1) throw new Error("V souboru nebylo nalezeno záhlaví 'category,text,weight,type'. Zkontrolujte prosím první řádek v Google Tabulce.");
+                if (headerIndex === -1) throw new Error("V souboru nebylo nalezeno záhlaví 'category,text,weight,type'.");
                 const headers = lines[headerIndex].split(',').map(h => h.trim().toLowerCase());
                 const dataLines = lines.slice(headerIndex + 1);
                 return dataLines.map(line => {
@@ -182,57 +179,64 @@
                 calculateScore();
             }
         }
-
-        async function exportToPDF() {
-            const doc = new jsPDF();
-            const technicianName = document.getElementById('technicianName').value || 'Neznámý technik';
+        
+        function exportToExcel() {
+            const technicianName = document.getElementById('technicianName').value || 'Nezadáno';
             const evaluationDate = document.getElementById('evaluationDate').valueAsDate.toLocaleDateString('cs-CZ');
-            const currentScore = parseFloat(document.getElementById('totalScore').textContent);
-            const maxScore = parseFloat(document.getElementById('maxScore').textContent);
-            const lostPoints = maxScore - currentScore;
+            const notes = document.getElementById('notes').value;
+            const wb = XLSX.utils.book_new();
 
-            // Vytvoření grafu
-            const ctx = document.getElementById('pdfChart').getContext('2d');
-            const chart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Získané body', 'Ztracené body'],
-                    datasets: [{
-                        data: [currentScore, lostPoints > 0 ? lostPoints : 0],
-                        backgroundColor: ['#22c55e', '#ef4444'],
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    animation: {
-                        onComplete: () => {
-                            const chartImage = chart.toBase64Image();
-                            doc.setFontSize(22);
-                            doc.text('Hodnocení Technika', 105, 20, { align: 'center' });
-                            doc.setFontSize(12);
-                            doc.text(`Jméno: ${technicianName}`, 20, 40);
-                            doc.text(`Datum: ${evaluationDate}`, 20, 48);
-                            doc.addImage(chartImage, 'PNG', 20, 60, 80, 80);
-                            doc.setFontSize(14);
-                            doc.text('Přehled Skóre', 150, 65);
-                            doc.setFontSize(11);
-                            doc.text(`Základní body: ${currentScore} / ${maxScore}`, 120, 75);
-                            doc.text(`Bonusové body: ${document.getElementById('bonusPoints').textContent}`, 120, 82);
-                            doc.text(`Mínusové body: ${document.getElementById('penaltyPoints').textContent}`, 120, 89);
-                            doc.setFontSize(16);
-                            doc.text(`Celkové skóre: ${document.getElementById('finalScore').textContent} (${document.getElementById('percentage').textContent})`, 120, 100);
-                            doc.save(`Hodnoceni_${technicianName.replace(/\s/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-                            chart.destroy(); // Důležité pro uvolnění paměti
-                        }
-                    }
-                }
+            const summaryData = [
+                ["Hodnocení Technika", ""], [],
+                ["Jméno technika:", technicianName], ["Datum:", evaluationDate], [],
+                ["CELKOVÝ PŘEHLED", ""],
+                ["Základní body:", parseFloat(document.getElementById('totalScore').textContent)],
+                ["Maximální možných bodů:", parseInt(document.getElementById('maxScore').textContent)],
+                ["Bonusové body:", document.getElementById('bonusPoints').textContent],
+                ["Mínusové body:", document.getElementById('penaltyPoints').textContent],
+                ["Celkové skóre:", parseFloat(document.getElementById('finalScore').textContent)],
+                ["Celková úspěšnost:", document.getElementById('percentage').textContent], [],
+                ["POZNÁMKY A HODNOCENÍ", ""], [notes]
+            ];
+            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+            summarySheet["!cols"] = [ { wch: 30 }, { wch: 60 } ];
+            XLSX.utils.book_append_sheet(wb, summarySheet, "Přehled");
+
+            const checklistExport = [["KATEGORIE", "POLOŽKA", "VÁHA", "VÝSLEDEK"]];
+            document.querySelectorAll('#checklistContainer .checklist-item-row').forEach(row => {
+                const cat = row.parentElement.previousElementSibling.textContent;
+                const text = row.querySelector('span').textContent;
+                const weight = row.dataset.weight;
+                const result = row.querySelector('input[type="radio"]:checked').value.toUpperCase();
+                checklistExport.push([cat, text, weight, result]);
             });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(checklistExport), "Základní Checklist");
+
+            const bonusExport = [["KATEGORIE", "POLOŽKA", "VÁHA", "VÝSLEDEK"]];
+             document.querySelectorAll('#scenariosContainer .checklist-item-row').forEach(row => {
+                const cat = row.parentElement.previousElementSibling.textContent;
+                const text = row.querySelector('span').textContent;
+                const weight = row.dataset.weight;
+                const result = row.querySelector('input[value="yes"]').checked ? 'ANO' : 'NE';
+                bonusExport.push([cat, text, weight, result]);
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(bonusExport), "Bonusové Scénáře");
+            
+            const penaltyExport = [["KATEGORIE", "PROHŘEŠEK", "PENALIZACE", "UDĚLENO"]];
+            document.querySelectorAll('#penaltiesContainer .penalty-item-row').forEach(row => {
+                const cat = row.parentElement.previousElementSibling.textContent;
+                const text = row.querySelector('span').textContent;
+                const weight = row.querySelector('input[type="checkbox"]').dataset.weight;
+                const result = row.querySelector('input[type="checkbox"]').checked ? 'ANO' : 'NE';
+                penaltyExport.push([cat, text, weight, result]);
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(penaltyExport), "Mínusové body");
+
+            XLSX.writeFile(wb, `Hodnoceni_${technicianName.replace(/\s/g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        // --- AI FUNKCIONALITA ---
-        // ... (kód pro getEvaluationData a callGeminiAPI zůstává stejný)
+        function getEvaluationData() { /* ... Stejná funkce jako v minulé verzi ... */ }
+        async function callGeminiAPI(prompt) { /* ... Stejná funkce jako v minulé verzi ... */ }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const allData = await loadDataFromSheet(googleSheetLink);
@@ -280,7 +284,7 @@
                 <div class="bg-white p-6 rounded-xl shadow-md">
                      <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <button id="exportPdfButton" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">Exportovat do PDF</button>
+                        <button id="exportExcelButton" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">Exportovat do Excelu</button>
                         <button id="resetButton" class="w-full sm:w-auto flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700">Resetovat formulář</button>
                     </div>
                 </div>`;
@@ -289,7 +293,7 @@
             document.getElementById('evaluationDate').valueAsDate = new Date();
             calculateScore();
             document.getElementById('resetButton').addEventListener('click', resetForm);
-            document.getElementById('exportPdfButton').addEventListener('click', exportToPDF);
+            document.getElementById('exportExcelButton').addEventListener('click', exportToExcel);
             // ... (event listenery pro AI tlačítka zůstávají stejné)
         });
     </script>
