@@ -16,8 +16,24 @@
         .custom-radio:checked::after { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .progress-bar, .bonus-bar { transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; }
         .weight-display { width: 60px; text-align: center; padding: 0.25rem; font-weight: 500; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 48px; height: 48px; animation: spin 1.5s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loader-bar-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .loader-bar {
+            height: 1rem;
+            background-color: #3b82f6;
+            border-radius: 9999px;
+            width: 40%;
+            animation: loading-animation 2s infinite;
+        }
+        @keyframes loading-animation {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(150%); }
+            100% { transform: translateX(-100%); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
@@ -30,9 +46,14 @@
         <main id="main-content" class="space-y-8 hidden">
             <!-- Obsah bude vygenerován dynamicky po načtení dat -->
         </main>
-        <div id="loader-container" class="flex flex-col items-center justify-center p-16">
-            <div class="loader"></div>
-            <p class="text-center text-gray-600 mt-4 font-semibold">Načítám data z Google Tabulky...</p>
+        <div id="loader-container" class="bg-white p-8 rounded-xl shadow-md">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-semibold text-gray-700">Hlavní servisní úkony</span>
+                <span class="text-sm text-gray-500">Načítám...</span>
+            </div>
+            <div class="loader-bar-container">
+                <div class="loader-bar"></div>
+            </div>
         </div>
     </div>
 
@@ -296,7 +317,7 @@
             document.getElementById('aiLoadingOverlay').classList.remove('hidden');
             document.getElementById('generateFeedbackBtn').disabled = true;
             document.getElementById('generateImprovementsBtn').disabled = true;
-            const apiKey = ""; 
+            const apiKey = "AIzaSyAHnMJoLGBOZxv045gF8f4N2xZ7VPT5U64"; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
             for (let i = 0; i < retries; i++) {
@@ -386,7 +407,7 @@
                         <button id="generateFeedbackBtn" class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">✨ Vygenerovat hodnocení</button>
                         <button id="generateImprovementsBtn" class="flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2">✨ Navrhnout zlepšení</button>
                     </div>
-                    <div id="aiLoadingOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex-col items-center justify-center rounded-xl hidden z-10"><div class="flex space-x-2"><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse"></div><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div></div><p class="mt-4 text-gray-700 font-semibold">AI pracuje na odpovědi...</p></div>
+                    <div id="aiLoadingOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl hidden z-10"><div class="flex space-x-2"><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse"></div><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div></div><p class="mt-4 text-gray-700 font-semibold">AI pracuje na odpovědi...</p></div>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md">
                      <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
