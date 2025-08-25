@@ -16,24 +16,7 @@
         .custom-radio:checked::after { content: ''; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .progress-bar, .bonus-bar { transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; }
         .weight-display { width: 60px; text-align: center; padding: 0.25rem; font-weight: 500; }
-        .loader-bar-container {
-            width: 100%;
-            background-color: #e5e7eb;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .loader-bar {
-            height: 1rem;
-            background-color: #3b82f6;
-            border-radius: 9999px;
-            width: 40%;
-            animation: loading-animation 2s infinite;
-        }
-        @keyframes loading-animation {
-            0% { transform: translateX(-100%); }
-            50% { transform: translateX(150%); }
-            100% { transform: translateX(-100%); }
-        }
+        #loader-bar-progress { transition: width 0.2s ease-out; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 p-4 sm:p-6 md:p-8">
@@ -48,11 +31,11 @@
         </main>
         <div id="loader-container" class="bg-white p-8 rounded-xl shadow-md">
             <div class="flex justify-between items-center mb-2">
-                <span class="font-semibold text-gray-700">Hlavní servisní úkony</span>
-                <span class="text-sm text-gray-500">Načítám...</span>
+                <span id="loader-message" class="font-semibold text-gray-700">Připojuji se k databázi...</span>
+                <span id="loader-percentage" class="text-sm text-gray-500 font-mono">0%</span>
             </div>
-            <div class="loader-bar-container">
-                <div class="loader-bar"></div>
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div id="loader-bar-progress" class="bg-gray-500 h-4 rounded-full" style="width: 0%"></div>
             </div>
         </div>
     </div>
@@ -348,82 +331,130 @@
             const data = getEvaluationData();
             const prompt = `Jsi manažer kvality v servisním centru a píšeš slovní hodnocení pro technika. Na základě následujících strukturovaných dat a manuálních poznámek napiš profesionální, stručné a konstruktivní hodnocení. **Data pro hodnocení:** - **Jméno technika:** ${data.technicianName} - **Celková úspěšnost:** ${data.totalPercentage} - **Základní body:** ${data.basePoints} z ${data.maxPoints} - **Bonusové body:** ${data.bonusPoints} - **Mínusové body:** ${data.penaltyPoints} **Manuální poznámky od hodnotícího (tyto mají vysokou prioritu a měly by být zohledněny):** ${data.manualNotes || 'Žádné.'} **Silné stránky (splněno na ANO):** ${data.strengths.length > 0 ? data.strengths.map(s => `- ${s}`).join('\n') : '- Žádné zaznamenané.'} **Oblasti pro zlepšení (splněno na ČÁSTEČNĚ nebo NE):** ${data.weaknesses.length > 0 ? data.weaknesses.map(w => `- ${w}`).join('\n') : '- Žádné zaznamenané.'} **Získané bonusové body:** ${data.bonuses.length > 0 ? data.bonuses.map(b => `- ${b}`).join('\n') : '- Žádné.'} **Udělené penalizace:** ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'} **Tvoje úloha:** Napiš slovní hodnocení, které začíná celkovým shrnutím. Poté zkombinuj informace ze strukturovaných dat s kvalitativními postřehy z manuálních poznámek. Vytvoř souvislý text, který integruje obě perspektivy. Použij formátování s odrážkami pro přehlednost. Na závěr přidej pozitivní a motivující větu.`;
             const generatedText = await callGeminiAPI(prompt);
-            if (generatedText) document.getElementById('notes').value = generatedText;
+            if (generatedText) {
+                const notesEl = document.getElementById('notes');
+                if (notesEl.value.trim() !== '') {
+                    notesEl.value += '\n\n---\n\n';
+                }
+                notesEl.value += generatedText;
+            }
         }
 
         async function onGenerateImprovements() {
             const data = getEvaluationData();
             if (data.weaknesses.length === 0 && data.penalties.length === 0) {
-                document.getElementById('notes').value = "Skvělá práce! Nebyly nalezeny žádné konkrétní oblasti pro zlepšení.";
+                 const notesEl = document.getElementById('notes');
+                if (notesEl.value.trim() !== '') {
+                    notesEl.value += '\n\n---\n\n';
+                }
+                notesEl.value += "Skvělá práce! Nebyly nalezeny žádné konkrétní oblasti pro zlepšení.";
                 return;
             }
             const prompt = `Jsi zkušený trenér pro techniky v servisním centru. Na základě následujícího seznamu nedostatků a kontextu z manuálních poznámek navrhni konkrétní a praktické tipy pro zlepšení. **Seznam nedostatků technika (${data.technicianName}):** **Body, kde došlo ke ztrátě bodů:** ${data.weaknesses.length > 0 ? data.weaknesses.map(w => `- ${w}`).join('\n') : '- Žádné.'} **Udělené penalizace:** ${data.penalties.length > 0 ? data.penalties.map(p => `- ${p}`).join('\n') : '- Žádné.'} **Kontext z manuálních poznámek hodnotícího:** ${data.manualNotes || 'Žádné.'} **Tvoje úloha:** Pro 2-3 nejdůležitější nedostatky z výše uvedeného seznamu napiš konkrétní doporučení. Při formulování doporučení vezmi v potaz i kontext z manuálních poznámek. Ke každému doporučení přidej příklad fráze, kterou by technik mohl použít v komunikaci se zákazníkem. Formátuj odpověď jako seznam s odrážkami. Buď stručný a zaměřený na praxi.`;
             const generatedText = await callGeminiAPI(prompt);
-            if (generatedText) document.getElementById('notes').value = generatedText;
+            if (generatedText) {
+                const notesEl = document.getElementById('notes');
+                if (notesEl.value.trim() !== '') {
+                    notesEl.value += '\n\n---\n\n';
+                }
+                notesEl.value += generatedText;
+            }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            const loaderMessage = document.getElementById('loader-message');
+            const loaderPercentage = document.getElementById('loader-percentage');
+            const loaderBarProgress = document.getElementById('loader-bar-progress');
+            const messages = [
+                'Připojuji se k databázi...',
+                'Stahuji data checklistu...',
+                'Zpracovávám kategorie...',
+                'Finalizuji rozhraní...'
+            ];
+            let progress = 0;
+            let messageIndex = 0;
+
+            const loadingInterval = setInterval(() => {
+                progress += 1;
+                if (progress <= 100) {
+                    loaderBarProgress.style.width = `${progress}%`;
+                    loaderPercentage.textContent = `${progress}%`;
+                    if (progress % 25 === 0 && messageIndex < messages.length -1) {
+                        messageIndex++;
+                        loaderMessage.textContent = messages[messageIndex];
+                    }
+                }
+            }, 20); 
+
             const allData = await loadDataFromSheet(googleSheetLink);
+            
+            clearInterval(loadingInterval);
+            loaderBarProgress.style.width = '100%';
+            loaderPercentage.textContent = '100%';
+            loaderMessage.textContent = 'Hotovo!';
+
             if (!allData) return;
-            
-            const checklistData = allData.filter(d => d.type === 'checklist');
-            const scenariosData = allData.filter(d => d.type === 'bonus');
-            const penaltyData = allData.filter(d => d.type === 'penalty');
-            
-            document.getElementById('loader-container').style.display = 'none';
-            const mainContentEl = document.getElementById('main-content');
-            mainContentEl.classList.remove('hidden');
-            mainContentEl.innerHTML = `
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Základní údaje</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label for="technicianName" class="block text-sm font-medium text-gray-700 mb-1">Jméno technika</label><input type="text" id="technicianName" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Jan Novák"></div>
-                        <div><label for="evaluationDate" class="block text-sm font-medium text-gray-700 mb-1">Datum hodnocení</label><input type="date" id="evaluationDate" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <div class="lg:col-span-3 space-y-8"><div id="checklistContainer" class="bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center border-b pb-2 mb-6"><h2 class="text-xl font-bold">Základní Checklist</h2><div class="hidden sm:grid grid-cols-4 gap-x-2 text-center font-semibold text-xs sm:text-sm"><span class="w-16">Váha</span><span class="w-16">ANO</span><span class="w-16">ČÁST.</span><span class="w-16">NE</span></div></div><div id="checklistItems" class="space-y-6"></div></div></div>
-                    <div class="lg:col-span-2 space-y-8"><div id="penaltiesContainer" class="bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center border-b pb-2 mb-6"><h2 class="text-xl font-bold text-red-600">Mínusové body</h2><div class="hidden sm:grid grid-cols-2 gap-x-4 text-center font-semibold"><span class="w-20">Penalizace</span><span class="w-20">Udělit</span></div></div><div id="penaltyItems" class="space-y-6"></div></div><div id="scenariosContainer" class="bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center border-b pb-2 mb-6"><h2 class="text-xl font-bold text-green-600">Bonusové body</h2><div class="hidden sm:grid grid-cols-3 gap-x-4 text-center font-semibold"><span class="w-20">Váha</span><span class="w-20">ANO</span><span class="w-20">NE</span></div></div><div id="scenarioItems" class="space-y-6"></div></div></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Výsledky</h2>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center"><span class="font-semibold">Součet bodů (základní):</span><span id="totalScore" class="text-2xl font-bold text-gray-800">0</span></div>
-                        <div class="flex justify-between items-center"><span class="font-semibold">Maximální možné body:</span><span id="maxScore" class="text-lg font-semibold text-gray-700">0</span></div>
-                        <div class="flex justify-between items-center text-green-600"><span class="font-semibold">Bonusové body:</span><span id="bonusPoints" class="text-2xl font-bold">+0</span></div>
-                        <div class="flex justify-between items-center text-red-600"><span class="font-semibold">Mínusové body:</span><span id="penaltyPoints" class="text-2xl font-bold">-0</span></div>
-                        <hr class="my-2"><div class="flex justify-between items-center"><span class="font-bold text-lg">Celkové skóre:</span><span id="finalScore" class="text-2xl font-bold text-blue-800">0</span></div><hr class="my-2">
-                        <div class="space-y-2 pt-2">
-                            <div class="flex justify-between items-center font-bold text-lg"><span>Celková úspěšnost:</span><span id="percentage" class="text-2xl text-blue-600">0%</span></div>
-                            <div class="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden"><div id="progressBar" class="progress-bar h-4"></div><div id="bonusBar" class="bonus-bar h-4"></div></div>
-                            <div id="legendContainer" class="flex justify-end text-xs mt-1 space-x-4"><span id="legendBaseSpan" class="flex items-center"><span id="legendBase" class="w-3 h-3 rounded-full mr-1.5"></span>Základní</span><span id="legendBonusSpan" class="flex items-center"><span id="legendBonus" class="w-3 h-3 rounded-full mr-1.5"></span>Bonus</span></div>
+
+            setTimeout(() => {
+                const checklistData = allData.filter(d => d.type === 'checklist');
+                const scenariosData = allData.filter(d => d.type === 'bonus');
+                const penaltyData = allData.filter(d => d.type === 'penalty');
+                
+                document.getElementById('loader-container').style.display = 'none';
+                const mainContentEl = document.getElementById('main-content');
+                mainContentEl.classList.remove('hidden');
+                mainContentEl.innerHTML = `
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-bold mb-4 border-b pb-2">Základní údaje</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="technicianName" class="block text-sm font-medium text-gray-700 mb-1">Jméno technika</label><input type="text" id="technicianName" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Jan Novák"></div>
+                            <div><label for="evaluationDate" class="block text-sm font-medium text-gray-700 mb-1">Datum hodnocení</label><input type="date" id="evaluationDate" class="w-full p-2 border border-gray-300 rounded-md shadow-sm"></div>
                         </div>
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md relative">
-                    <div class="flex justify-between items-center border-b pb-2 mb-4"><h2 class="text-xl font-bold">Poznámky a AI Asistent</h2></div>
-                    <textarea id="notes" rows="8" class="w-full p-3 border border-gray-300 rounded-md shadow-sm" placeholder="Zde můžete zapsat vlastní postřehy..."></textarea>
-                    <div class="mt-4 flex flex-col sm:flex-row gap-3">
-                        <button id="generateFeedbackBtn" class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">✨ Vygenerovat hodnocení</button>
-                        <button id="generateImprovementsBtn" class="flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2">✨ Navrhnout zlepšení</button>
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        <div class="lg:col-span-3 space-y-8"><div id="checklistContainer" class="bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center border-b pb-2 mb-6"><h2 class="text-xl font-bold">Základní Checklist</h2><div class="hidden sm:grid grid-cols-4 gap-x-2 text-center font-semibold text-xs sm:text-sm"><span class="w-16">Váha</span><span class="w-16">ANO</span><span class="w-16">ČÁST.</span><span class="w-16">NE</span></div></div><div id="checklistItems" class="space-y-6"></div></div></div>
+                        <div class="lg:col-span-2 space-y-8"><div id="penaltiesContainer" class="bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center border-b pb-2 mb-6"><h2 class="text-xl font-bold text-red-600">Mínusové body</h2><div class="hidden sm:grid grid-cols-2 gap-x-4 text-center font-semibold"><span class="w-20">Penalizace</span><span class="w-20">Udělit</span></div></div><div id="penaltyItems" class="space-y-6"></div></div><div id="scenariosContainer" class="bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center border-b pb-2 mb-6"><h2 class="text-xl font-bold text-green-600">Bonusové body</h2><div class="hidden sm:grid grid-cols-3 gap-x-4 text-center font-semibold"><span class="w-20">Váha</span><span class="w-20">ANO</span><span class="w-20">NE</span></div></div><div id="scenarioItems" class="space-y-6"></div></div></div>
                     </div>
-                    <div id="aiLoadingOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl hidden z-10"><div class="flex space-x-2"><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse"></div><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div><div class="w-4 h-4 bg-blue-600 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div></div><p class="mt-4 text-gray-700 font-semibold">AI pracuje na odpovědi...</p></div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                     <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <button id="exportButton" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">Exportovat do Excelu</button>
-                        <button id="resetButton" class="w-full sm:w-auto flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700">Resetovat formulář</button>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-bold mb-4 border-b pb-2">Výsledky</h2>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center"><span class="font-semibold">Součet bodů (základní):</span><span id="totalScore" class="text-2xl font-bold text-gray-800">0</span></div>
+                            <div class="flex justify-between items-center"><span class="font-semibold">Maximální možné body:</span><span id="maxScore" class="text-lg font-semibold text-gray-700">0</span></div>
+                            <div class="flex justify-between items-center text-green-600"><span class="font-semibold">Bonusové body:</span><span id="bonusPoints" class="text-2xl font-bold">+0</span></div>
+                            <div class="flex justify-between items-center text-red-600"><span class="font-semibold">Mínusové body:</span><span id="penaltyPoints" class="text-2xl font-bold">-0</span></div>
+                            <hr class="my-2"><div class="flex justify-between items-center"><span class="font-bold text-lg">Celkové skóre:</span><span id="finalScore" class="text-2xl font-bold text-blue-800">0</span></div><hr class="my-2">
+                            <div class="space-y-2 pt-2">
+                                <div class="flex justify-between items-center font-bold text-lg"><span>Celková úspěšnost:</span><span id="percentage" class="text-2xl text-blue-600">0%</span></div>
+                                <div class="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden"><div id="progressBar" class="progress-bar h-4"></div><div id="bonusBar" class="bonus-bar h-4"></div></div>
+                                <div id="legendContainer" class="flex justify-end text-xs mt-1 space-x-4"><span id="legendBaseSpan" class="flex items-center"><span id="legendBase" class="w-3 h-3 rounded-full mr-1.5"></span>Základní</span><span id="legendBonusSpan" class="flex items-center"><span id="legendBonus" class="w-3 h-3 rounded-full mr-1.5"></span>Bonus</span></div>
+                            </div>
+                        </div>
                     </div>
-                </div>`;
-            
-            renderAll(checklistData, scenariosData, penaltyData);
-            document.getElementById('evaluationDate').valueAsDate = new Date();
-            calculateScore();
-            document.getElementById('resetButton').addEventListener('click', resetForm);
-            document.getElementById('exportButton').addEventListener('click', exportToExcel);
-            document.getElementById('generateFeedbackBtn').addEventListener('click', onGenerateFeedback);
-            document.getElementById('generateImprovementsBtn').addEventListener('click', onGenerateImprovements);
+                    <div class="bg-white p-6 rounded-xl shadow-md relative">
+                        <div class="flex justify-between items-center border-b pb-2 mb-4"><h2 class="text-xl font-bold">Poznámky a AI Asistent</h2></div>
+                        <textarea id="notes" rows="8" class="w-full p-3 border border-gray-300 rounded-md shadow-sm" placeholder="Zde můžete zapsat vlastní postřehy..."></textarea>
+                        <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                            <button id="generateFeedbackBtn" class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">✨ Vygenerovat hodnocení</button>
+                            <button id="generateImprovementsBtn" class="flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2">✨ Navrhnout zlepšení</button>
+                        </div>
+                        <div id="aiLoadingOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl hidden z-10"><div class="flex space-x-2"><div class="w-4 h-4 bg-gray-500 rounded-full animate-pulse"></div><div class="w-4 h-4 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div><div class="w-4 h-4 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div></div><p class="mt-4 text-gray-700 font-semibold">AI pracuje na odpovědi...</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                         <h2 class="text-xl font-bold mb-4 border-b pb-2">Akce</h2>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button id="exportButton" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">Exportovat do Excelu</button>
+                            <button id="resetButton" class="w-full sm:w-auto flex-1 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700">Resetovat formulář</button>
+                        </div>
+                    </div>`;
+                
+                renderAll(checklistData, scenariosData, penaltyData);
+                document.getElementById('evaluationDate').valueAsDate = new Date();
+                calculateScore();
+                document.getElementById('resetButton').addEventListener('click', resetForm);
+                document.getElementById('exportButton').addEventListener('click', exportToExcel);
+                document.getElementById('generateFeedbackBtn').addEventListener('click', onGenerateFeedback);
+                document.getElementById('generateImprovementsBtn').addEventListener('click', onGenerateImprovements);
+            }, 500);
         });
     </script>
 </body>
