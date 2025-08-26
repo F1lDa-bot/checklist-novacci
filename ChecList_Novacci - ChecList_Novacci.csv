@@ -1,0 +1,30 @@
+category,text,weight,type
+PŘÍCHOD ZÁKAZNÍKA,Přivítání zákazníka,2,checklist
+PŘÍCHOD ZÁKAZNÍKA,Zjištění základních informací o zákazníkovi a zařízení,2,checklist
+PŘÍCHOD ZÁKAZNÍKA,"Vysvětlení, co se bude dít během návštěvy",5,checklist
+PŘÍCHOD ZÁKAZNÍKA,Informace o ceně služby a odhadovaném čase,5,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Co je konkrétně za závadu?,5,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Jak se závada projevuje?,5,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Jak často se problém vyskytuje?,3,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Od kdy problém trvá?,3,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Zkoušel už zákazník nějaké kroky k řešení?,3,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Vyplnění předávacího protokolu,4,checklist
+ZJIŠTĚNÍ INFORMACÍ O ZÁVADĚ,Ukázka a vysvětlení MRI diagnostiky,4,checklist
+ČEKÁNÍ,Zákazník informován o čekací době,5,checklist
+ČEKÁNÍ,Nabídnuta voda / místo k sezení (Flex table),2,checklist
+ODCHOD,Sdělena výsledná diagnóza / stav zařízení / provedeno čištění,3,checklist
+ODCHOD,Test závady po diagnostice/reinstalaci/čištění,5,checklist
+ODCHOD,"Stihnutí času, který byl řečen na začátku",5,checklist
+ODCHOD,"Poskytnuta doporučení (častější čištění, jiný postup…)",5,checklist
+ODCHOD,Rozloučení se zákazníkem,2,checklist
+Možné scénáře po diagnostice,Oprava zařízení,5,bonus
+Možné scénáře po diagnostice,Výkup zařízení (pokud se dá vykoupit),3,bonus
+Možné scénáře po diagnostice,Reklamace,5,bonus
+Možné scénáře po diagnostice,Baterie - kontrola kondice a nabídka řešení,2,bonus
+Prodej nového zařízení / příslušenství (ACC):,Nabídnuto nové zařízení,1,bonus
+Prodej nového zařízení / příslušenství (ACC):,Zákazník si mohl vyzkoušet jiné,1,bonus
+Prodej nového zařízení / příslušenství (ACC):,Nabídnuto přinést zpět na test,1,bonus
+Prodej nového zařízení / příslušenství (ACC):,"Nabídnut doplňkový prodej (kryt, sklo, kabel,…)",2,bonus
+Nedostatky v komunikaci a postupech,Technik neinformoval proaktivně o času opravy,-2,penalty
+Nedostatky v komunikaci a postupech,Technik nevysvětlil proaktivně obsah diagnostiky,-2,penalty
+Nedostatky v komunikaci a postupech,Nesprávně vyplněný protokol (zásadní chyby),-1,penalty
