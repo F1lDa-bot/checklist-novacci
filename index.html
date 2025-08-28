@@ -60,18 +60,16 @@
     </div>
 
     <script>
-        // DŮLEŽITÉ: Vložte sem odkaz na "raw" verzi vašeho CSV souboru z GitHubu.
-        // Příklad: https://raw.githubusercontent.com/VASEJMENO/VASREPOZITAR/main/checklist.csv
-        const githubCsvUrl = 'https://raw.githubusercontent.com/F1lDa-bot/checklist-novacci/refs/heads/main/ChecList_Novacci%20-%20ChecList_Novacci.csv';
+        const googleSheetLink = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQN4fngrzilEPiNzTEsxMvehRuJ0cJvL5TJGH0UT15WDQeiLKS27_dEPX4qlfyFIVkasX1OKp__CJu3/pub?gid=289605977&single=true&output=csv';
 
         async function loadDataFromSheet(url) {
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error(`Chyba sítě: ${response.status} - Nelze načíst soubor z GitHubu.`);
+                if (!response.ok) throw new Error(`Chyba sítě: ${response.statusText}`);
                 const csvText = await response.text();
                 let lines = csvText.trim().split(/\r\n|\n/);
                 let headerIndex = lines.findIndex(line => line.trim().toLowerCase().startsWith('category,text,weight,type'));
-                if (headerIndex === -1) throw new Error("V souboru nebylo nalezeno záhlaví 'category,text,weight,type'. Zkontrolujte CSV soubor.");
+                if (headerIndex === -1) throw new Error("V souboru nebylo nalezeno záhlaví 'category,text,weight,type'.");
                 const headers = lines[headerIndex].split(',').map(h => h.trim().toLowerCase());
                 const dataLines = lines.slice(headerIndex + 1);
                 return dataLines.map(line => {
@@ -407,7 +405,7 @@
                 }
             }, 20); 
 
-            const allData = await loadDataFromSheet(githubCsvUrl);
+            const allData = await loadDataFromSheet(googleSheetLink);
             
             clearInterval(loadingInterval);
             loaderBarProgress.style.width = '100%';
