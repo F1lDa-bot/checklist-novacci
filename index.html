@@ -110,7 +110,6 @@
                 controlsDiv.appendChild(weightDisplay);
                 controlsDiv.appendChild(radioYes);
                 controlsDiv.appendChild(radioNo);
-                // Attach listeners only for existing elements
                 [radioYes, radioNo].forEach(el => el.addEventListener('change', calculateScore));
             } else {
                  controlsDiv.className = 'grid grid-cols-4 gap-x-2 text-center items-center';
@@ -119,7 +118,6 @@
                  controlsDiv.appendChild(radioYes);
                  controlsDiv.appendChild(radioPartial);
                  controlsDiv.appendChild(radioNo);
-                 // Attach listeners for all three
                  [radioYes, radioPartial, radioNo].forEach(el => el.addEventListener('change', calculateScore));
             }
 
@@ -169,18 +167,18 @@
 
         function calculateScore() {
             let currentScore = 0, maxScore = 0, bonusPoints = 0, penaltyPoints = 0;
-            document.querySelectorAll('#checklistContainer .checklist-item-row').forEach(row => {
+            document.querySelectorAll('#checklistItems .checklist-item-row').forEach(row => {
                 const weight = parseInt(row.dataset.weight) || 0;
                 maxScore += weight;
                 const selected = row.querySelector('input[type="radio"]:checked').value;
                 if (selected === 'yes') currentScore += weight;
                 else if (selected === 'partial') currentScore += weight / 2;
             });
-            document.querySelectorAll('#scenariosContainer .checklist-item-row').forEach(row => {
+            document.querySelectorAll('#scenarioItems .checklist-item-row').forEach(row => {
                 const weight = parseInt(row.dataset.weight) || 0;
                 if (row.querySelector('input[value="yes"]').checked) bonusPoints += weight;
             });
-            document.querySelectorAll('#penaltiesContainer .penalty-item-row').forEach(row => {
+            document.querySelectorAll('#penaltyItems .penalty-item-row').forEach(row => {
                 if (row.querySelector('input[type="checkbox"]').checked) penaltyPoints += parseInt(row.querySelector('input[type="checkbox"]').dataset.weight);
             });
 
