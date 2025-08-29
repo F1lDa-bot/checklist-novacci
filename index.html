@@ -181,7 +181,7 @@
                 if (row.querySelector('input[type="checkbox"]').checked) penaltyPoints += parseInt(row.querySelector('input[type="checkbox"]').dataset.weight);
             });
 
-            const finalScore = currentScore + bonusPoints + penaltyPoints;
+            const finalScore = currentScore + bonusPoints - penaltyPoints;
             const basePercentage = maxScore > 0 ? (currentScore / maxScore) * 100 : 0;
             const totalPercentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0;
             const bonusPercentage = maxScore > 0 ? (bonusPoints / maxScore) * 100 : 0;
@@ -189,7 +189,7 @@
             document.getElementById('totalScore').textContent = currentScore.toFixed(1);
             document.getElementById('maxScore').textContent = maxScore;
             document.getElementById('bonusPoints').textContent = `+${bonusPoints}`;
-            document.getElementById('penaltyPoints').textContent = `${penaltyPoints}`;
+            document.getElementById('penaltyPoints').textContent = `-${penaltyPoints}`;
             document.getElementById('finalScore').textContent = finalScore.toFixed(1);
             document.getElementById('percentage').textContent = `${totalPercentage}%`;
             
