@@ -110,6 +110,8 @@
                 controlsDiv.appendChild(weightDisplay);
                 controlsDiv.appendChild(radioYes);
                 controlsDiv.appendChild(radioNo);
+                // Attach listeners only for existing elements
+                [radioYes, radioNo].forEach(el => el.addEventListener('change', calculateScore));
             } else {
                  controlsDiv.className = 'grid grid-cols-4 gap-x-2 text-center items-center';
                  weightDisplay.className = 'weight-display mx-auto';
@@ -117,11 +119,12 @@
                  controlsDiv.appendChild(radioYes);
                  controlsDiv.appendChild(radioPartial);
                  controlsDiv.appendChild(radioNo);
+                 // Attach listeners for all three
+                 [radioYes, radioPartial, radioNo].forEach(el => el.addEventListener('change', calculateScore));
             }
 
             itemDiv.appendChild(textSpan);
             itemDiv.appendChild(controlsDiv);
-            [radioYes, radioPartial, radioNo].forEach(el => el.addEventListener('change', calculateScore));
             return itemDiv;
         }
 
